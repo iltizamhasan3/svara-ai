@@ -16,6 +16,7 @@ jupyter lab ../notebooks/week2_indobert_experiment.ipynb
 ```
 
 Training metrics and the confusion matrix are written to `artifacts/week2/`
-by the notebook. The exact checkpoint and hyperparameters remain candidates
-for Week 3 selection; the test split is never used for tuning. IGAR is loaded
-only as a clearly labelled external/domain-validation sample.
+by the notebook. Test evaluation is separately gated by
+`RUN_TEST_EVALUATION = True` and `MODEL_FROZEN = True`, so the confirmation
+split stays untouched while the Week 3 checkpoint is still being selected.
+IGAR is loaded only as a clearly labelled external/domain-validation sample.

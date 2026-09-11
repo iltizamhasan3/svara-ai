@@ -1,0 +1,34 @@
+{
+  "manifest_version": 1,
+  "sources": {
+    "smsa": {
+      "dataset": "SmSA document sentiment (IndoNLU)",
+      "repository": "https://github.com/IndoNLP/indonlu",
+      "commit": "ce728f6926a36174b9923dfe49d6a6839b6e9bb7",
+      "license": "CC BY-SA 4.0",
+      "schema": ["sentence", "label"],
+      "files": [
+        {"name": "train_preprocess.tsv", "path": "dataset/smsa_doc-sentiment-prosa/train_preprocess.tsv", "source_url": "https://raw.githubusercontent.com/IndoNLP/indonlu/ce728f6926a36174b9923dfe49d6a6839b6e9bb7/dataset/smsa_doc-sentiment-prosa/train_preprocess.tsv", "expected_size_bytes": 2186718, "expected_sha256": "50f38ceed9b31521bf1581e126620532cc9b790712938159a2cdcf6906977a9b", "expected_git_blob_sha1": "05fa9e062b81bc57e72a4bd19f14ad14b7b0de8c"},
+        {"name": "valid_preprocess.tsv", "path": "dataset/smsa_doc-sentiment-prosa/valid_preprocess.tsv", "source_url": "https://raw.githubusercontent.com/IndoNLP/indonlu/ce728f6926a36174b9923dfe49d6a6839b6e9bb7/dataset/smsa_doc-sentiment-prosa/valid_preprocess.tsv", "expected_size_bytes": 246974, "expected_sha256": "6ab41ddc9d58a35086f05ebd2e209c74cb03d87d4f51d6abdfba674eafbefa74", "expected_git_blob_sha1": "4bbd081c3a96aba2ff2cacbddb4cb7b29b261c08"},
+        {"name": "test_preprocess.tsv", "path": "dataset/smsa_doc-sentiment-prosa/test_preprocess.tsv", "source_url": "https://raw.githubusercontent.com/IndoNLP/indonlu/ce728f6926a36174b9923dfe49d6a6839b6e9bb7/dataset/smsa_doc-sentiment-prosa/test_preprocess.tsv", "expected_size_bytes": 75949, "expected_sha256": "4e8016daa8e4e1b193f2a28a79d3a7804dd4e3f926a3ab7e8a64264f5f416a6f", "expected_git_blob_sha1": "78556797cae7c8a359ea7bb3585893c209e75d63"}
+      ]
+    },
+    "igar": {
+      "dataset": "IGAR: Indonesian Government App Review Dataset",
+      "version": 3,
+      "doi": "10.17632/7zryc6k76z.3",
+      "landing_url": "https://data.mendeley.com/datasets/7zryc6k76z/3",
+      "license": "CC BY 4.0",
+      "metadata_url": "https://data.mendeley.com/public-api/datasets/7zryc6k76z?version=3",
+      "files_url": "https://data.mendeley.com/public-api/datasets/7zryc6k76z/files?version=3&folder_id=root",
+      "file_name": "Rating_labeled.csv",
+      "sample_path": "data/samples/igar/Rating_labeled_sample.csv",
+      "default_sample_size": 300,
+      "expected_size_bytes": 100624936,
+      "expected_sha256": "a27a0cf3dae752789fa25e97a5fb39b906f5bc2ea3d93891ff652d0168a3a4a7",
+      "schema": ["", "app", "content", "translation", "score", "at", "appVersion", "labelScoreBase"],
+      "labels": ["Negative", "Neutral", "Positive"],
+      "use_caveat": "External/domain validation only; not primary training data and not representative of all SVARA AI feedback."
+    }
+  }
+}

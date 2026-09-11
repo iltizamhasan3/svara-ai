@@ -33,3 +33,8 @@ supabase/.temp/
 .idea/
 .vscode/
 *.swp
+
+# Dataset payloads are reproducible downloads; only the small, reviewed sample is tracked.
+data/raw/
+data/**/*.part
+data/**/*.tmp

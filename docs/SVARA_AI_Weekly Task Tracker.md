@@ -80,8 +80,8 @@
 # Minggu 2 — Dataset & Upload Pipeline
 
 ### Project Lead + AI/NLP Engineer
-- [ ] Download IndoNLU SmSA
-- [ ] Download/sample IGAR
+- [x] Download IndoNLU SmSA
+- [x] Download/sample IGAR
 - [x] Melakukan EDA SmSA
 - [x] Mengecek distribusi label
 - [x] Membangun preprocessing awal

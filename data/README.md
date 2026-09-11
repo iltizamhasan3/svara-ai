@@ -14,6 +14,8 @@ python3 scripts/download_week2_datasets.py
 
 The default output root is this `data/` directory. Use `--output-root` to
 place downloads elsewhere and `--igar-sample-size` to change the sample size.
+The tracked sample was generated with 30 rows (10 per source label); its
+checksum and exact command are recorded in the manifest.
 The downloader uses only Python standard-library modules, writes downloads
 atomically, sends a descriptive User-Agent, verifies the pinned SmSA Git blob
 hashes and the IGAR API-provided SHA-256/size, and validates TSV/CSV schemas
@@ -39,3 +41,8 @@ presented as representative of all SVARA AI feedback.
 
 See `data/manifests/week2_sources.json` for exact URLs, expected hashes and
 sizes, schemas, licenses, and provenance caveats.
+
+The full IGAR SHA-256 and byte size in the manifest come from Mendeley's public
+file metadata. Because the downloader intentionally stops after the requested
+sample quotas, it does not claim to have rehashed the full multi-megabyte
+source file locally.

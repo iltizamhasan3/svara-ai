@@ -82,7 +82,13 @@ def fetch_igar_sample(manifest, destination, sample_size):
             if label not in selected: raise ValueError(f"unexpected IGAR label: {label!r}")
             if len(selected[label]) < quotas[label]: selected[label].append(row)
             if all(len(selected[label]) == quotas[label] for label in IGAR_LABELS): break
-    if any(not selected[label] for label in IGAR_LABELS): raise ValueError("IGAR stream did not contain all labels")
+    missing = {
+        label: quotas[label] - len(selected[label])
+        for label in IGAR_LABELS
+        if len(selected[label]) < quotas[label]
+    }
+    if missing:
+        raise ValueError(f"IGAR stream ended before requested quotas were met: {missing}")
     rows = [row for label in IGAR_LABELS for row in selected[label]]
     destination.parent.mkdir(parents=True, exist_ok=True)
     fd, temporary = tempfile.mkstemp(prefix=destination.name + ".", suffix=".tmp", dir=destination.parent)
@@ -103,7 +109,7 @@ def fetch_igar_sample(manifest, destination, sample_size):
 def main(argv=None):
     parser = argparse.ArgumentParser(description="Download pinned SmSA files and a deterministic stratified IGAR sample.")
     parser.add_argument("--output-root", type=Path, default=ROOT / "data", help="Dataset output root (default: repo data/)")
-    parser.add_argument("--igar-sample-size", type=int, default=300, help="IGAR rows, split deterministically across labels (default: 300)")
+    parser.add_argument("--igar-sample-size", type=int, default=30, help="IGAR rows, split deterministically across labels (default: 30)")
     args = parser.parse_args(argv)
     manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
     for item in manifest["sources"]["smsa"]["files"]:

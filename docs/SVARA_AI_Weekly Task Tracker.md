@@ -82,8 +82,8 @@
 ### Project Lead + AI/NLP Engineer
 - [ ] Download IndoNLU SmSA
 - [ ] Download/sample IGAR
-- [ ] Melakukan EDA SmSA
-- [ ] Mengecek distribusi label
+- [x] Melakukan EDA SmSA
+- [x] Mengecek distribusi label
 - [x] Membangun preprocessing awal
 - [ ] Menyiapkan notebook eksperimen IndoBERT
 

@@ -1,0 +1,50 @@
+{
+  "dataset": "SmSA",
+  "preprocessing_version": "preprocessing-v1",
+  "splits": {
+    "train": {
+      "file": "data/raw/smsa/train_preprocess.tsv",
+      "sha256": "50f38ceed9b31521bf1581e126620532cc9b790712938159a2cdcf6906977a9b",
+      "input_rows": 11000,
+      "usable_rows": 10919,
+      "cross_split_duplicate_rows_removed": 14,
+      "source_row_numbers": {
+        "first": 1,
+        "last": 11000
+      }
+    },
+    "validation": {
+      "file": "data/raw/smsa/valid_preprocess.tsv",
+      "sha256": "6ab41ddc9d58a35086f05ebd2e209c74cb03d87d4f51d6abdfba674eafbefa74",
+      "input_rows": 1260,
+      "usable_rows": 1260,
+      "cross_split_duplicate_rows_removed": 0,
+      "source_row_numbers": {
+        "first": 1,
+        "last": 1260
+      }
+    },
+    "test": {
+      "file": "data/raw/smsa/test_preprocess.tsv",
+      "sha256": "4e8016daa8e4e1b193f2a28a79d3a7804dd4e3f926a3ab7e8a64264f5f416a6f",
+      "input_rows": 500,
+      "usable_rows": 500,
+      "cross_split_duplicate_rows_removed": 0,
+      "source_row_numbers": {
+        "first": 1,
+        "last": 500
+      }
+    }
+  },
+  "cross_split_duplicate_text": {
+    "train__validation": 14,
+    "train__test": 0,
+    "validation__test": 0
+  },
+  "leakage_safe_cross_split_duplicate_text": {
+    "train__validation": 0,
+    "train__test": 0,
+    "validation__test": 0
+  },
+  "leakage_check_passed": true
+}

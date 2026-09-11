@@ -1,0 +1,220 @@
+{
+  "dataset": "SmSA",
+  "preprocessing_version": "preprocessing-v1",
+  "format": "headerless TSV: sentence<TAB>label",
+  "official_splits": {
+    "train": {
+      "file": "data/raw/smsa/train_preprocess.tsv",
+      "sha256": "50f38ceed9b31521bf1581e126620532cc9b790712938159a2cdcf6906977a9b",
+      "input_rows": 11000,
+      "usable_rows": 10933,
+      "missing_text_rows": 0,
+      "duplicate_rows_removed": 67,
+      "label_distribution": {
+        "positive": {
+          "count": 6383,
+          "percentage": 58.3829
+        },
+        "neutral": {
+          "count": 1138,
+          "percentage": 10.4089
+        },
+        "negative": {
+          "count": 3412,
+          "percentage": 31.2083
+        }
+      },
+      "text_length": {
+        "characters_min": 3,
+        "characters_mean": 189.61,
+        "characters_median": 161,
+        "characters_max": 567,
+        "tokens_min": 1,
+        "tokens_mean": 33.06,
+        "tokens_median": 28,
+        "tokens_max": 110
+      }
+    },
+    "validation": {
+      "file": "data/raw/smsa/valid_preprocess.tsv",
+      "sha256": "6ab41ddc9d58a35086f05ebd2e209c74cb03d87d4f51d6abdfba674eafbefa74",
+      "input_rows": 1260,
+      "usable_rows": 1260,
+      "missing_text_rows": 0,
+      "duplicate_rows_removed": 0,
+      "label_distribution": {
+        "positive": {
+          "count": 735,
+          "percentage": 58.3333
+        },
+        "neutral": {
+          "count": 131,
+          "percentage": 10.3968
+        },
+        "negative": {
+          "count": 394,
+          "percentage": 31.2698
+        }
+      },
+      "text_length": {
+        "characters_min": 4,
+        "characters_mean": 186.12,
+        "characters_median": 156.0,
+        "characters_max": 554,
+        "tokens_min": 1,
+        "tokens_mean": 32.52,
+        "tokens_median": 28.0,
+        "tokens_max": 100
+      }
+    },
+    "test": {
+      "file": "data/raw/smsa/test_preprocess.tsv",
+      "sha256": "4e8016daa8e4e1b193f2a28a79d3a7804dd4e3f926a3ab7e8a64264f5f416a6f",
+      "input_rows": 500,
+      "usable_rows": 500,
+      "missing_text_rows": 0,
+      "duplicate_rows_removed": 0,
+      "label_distribution": {
+        "positive": {
+          "count": 208,
+          "percentage": 41.6
+        },
+        "neutral": {
+          "count": 88,
+          "percentage": 17.6
+        },
+        "negative": {
+          "count": 204,
+          "percentage": 40.8
+        }
+      },
+      "text_length": {
+        "characters_min": 21,
+        "characters_mean": 142.07,
+        "characters_median": 123.0,
+        "characters_max": 477,
+        "tokens_min": 5,
+        "tokens_mean": 24.93,
+        "tokens_median": 22.0,
+        "tokens_max": 90
+      }
+    }
+  },
+  "leakage_safe_splits": {
+    "train": {
+      "file": "data/raw/smsa/train_preprocess.tsv",
+      "sha256": "50f38ceed9b31521bf1581e126620532cc9b790712938159a2cdcf6906977a9b",
+      "input_rows": 11000,
+      "usable_rows": 10919,
+      "missing_text_rows": 0,
+      "duplicate_rows_removed": 67,
+      "label_distribution": {
+        "positive": {
+          "count": 6376,
+          "percentage": 58.3936
+        },
+        "neutral": {
+          "count": 1136,
+          "percentage": 10.4039
+        },
+        "negative": {
+          "count": 3407,
+          "percentage": 31.2025
+        }
+      },
+      "text_length": {
+        "characters_min": 3,
+        "characters_mean": 189.78,
+        "characters_median": 161,
+        "characters_max": 567,
+        "tokens_min": 1,
+        "tokens_mean": 33.09,
+        "tokens_median": 28,
+        "tokens_max": 110
+      },
+      "cross_split_duplicate_rows_removed": 14
+    },
+    "validation": {
+      "file": "data/raw/smsa/valid_preprocess.tsv",
+      "sha256": "6ab41ddc9d58a35086f05ebd2e209c74cb03d87d4f51d6abdfba674eafbefa74",
+      "input_rows": 1260,
+      "usable_rows": 1260,
+      "missing_text_rows": 0,
+      "duplicate_rows_removed": 0,
+      "label_distribution": {
+        "positive": {
+          "count": 735,
+          "percentage": 58.3333
+        },
+        "neutral": {
+          "count": 131,
+          "percentage": 10.3968
+        },
+        "negative": {
+          "count": 394,
+          "percentage": 31.2698
+        }
+      },
+      "text_length": {
+        "characters_min": 4,
+        "characters_mean": 186.12,
+        "characters_median": 156.0,
+        "characters_max": 554,
+        "tokens_min": 1,
+        "tokens_mean": 32.52,
+        "tokens_median": 28.0,
+        "tokens_max": 100
+      }
+    },
+    "test": {
+      "file": "data/raw/smsa/test_preprocess.tsv",
+      "sha256": "4e8016daa8e4e1b193f2a28a79d3a7804dd4e3f926a3ab7e8a64264f5f416a6f",
+      "input_rows": 500,
+      "usable_rows": 500,
+      "missing_text_rows": 0,
+      "duplicate_rows_removed": 0,
+      "label_distribution": {
+        "positive": {
+          "count": 208,
+          "percentage": 41.6
+        },
+        "neutral": {
+          "count": 88,
+          "percentage": 17.6
+        },
+        "negative": {
+          "count": 204,
+          "percentage": 40.8
+        }
+      },
+      "text_length": {
+        "characters_min": 21,
+        "characters_mean": 142.07,
+        "characters_median": 123.0,
+        "characters_max": 477,
+        "tokens_min": 5,
+        "tokens_mean": 24.93,
+        "tokens_median": 22.0,
+        "tokens_max": 90
+      }
+    }
+  },
+  "cross_split_duplicate_text": {
+    "train__validation": 14,
+    "train__test": 0,
+    "validation__test": 0
+  },
+  "cross_split_train_rows_removed": 14,
+  "leakage_safe_cross_split_duplicate_text": {
+    "train__validation": 0,
+    "train__test": 0,
+    "validation__test": 0
+  },
+  "leakage_check_passed": true,
+  "notes": [
+    "Official train/validation/test boundaries are preserved; overlapping training texts are removed from the prepared training view.",
+    "Text is normalized for whitespace and Unicode only; punctuation, emoji, and slang are retained.",
+    "Rows with missing text are excluded; same-label duplicates are counted and removed within each split.",
+    "Conflicting normalized labels fail closed during preparation."
+  ]
+}

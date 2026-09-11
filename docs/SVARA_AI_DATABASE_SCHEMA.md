@@ -158,7 +158,8 @@ create table public.datasets (
   file_size_bytes bigint,
   content_hash text,
 
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  unique (id, user_id)
 );
 ```
 
@@ -193,7 +194,7 @@ create table public.analyses (
   id uuid primary key default gen_random_uuid(),
 
   user_id uuid not null references public.profiles(id) on delete cascade,
-  dataset_id uuid not null references public.datasets(id) on delete cascade,
+  dataset_id uuid not null,
 
   name text not null,
 
@@ -219,7 +220,12 @@ create table public.analyses (
   completed_at timestamptz,
 
   created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
+  updated_at timestamptz not null default now(),
+
+  unique (id, user_id),
+  unique (id, dataset_id),
+  foreign key (dataset_id, user_id)
+    references public.datasets(id, user_id) on delete cascade
 );
 ```
 
@@ -304,6 +310,7 @@ create table public.analysis_units (
   id uuid primary key default gen_random_uuid(),
 
   analysis_id uuid not null references public.analyses(id) on delete cascade,
+  dataset_id uuid not null,
   feedback_item_id uuid not null references public.feedback_items(id) on delete cascade,
 
   unit_index integer not null,
@@ -313,9 +320,12 @@ create table public.analysis_units (
 
   created_at timestamptz not null default now(),
 
-  unique (analysis_id, feedback_item_id, unit_index)
+  unique (analysis_id, feedback_item_id, unit_index),
+  unique (id, analysis_id)
 );
 ```
+
+Migration runtime menambahkan composite foreign key `(analysis_id, dataset_id)` dan `(feedback_item_id, dataset_id)` agar analysis unit tidak dapat menunjuk dataset yang berbeda.
 
 ---
 
@@ -366,9 +376,7 @@ Menyimpan cluster hasil BERTopic.
 
 Topic ID merupakan ID yang diberikan pipeline untuk analysis tertentu.
 
-`topic_id = -1` dapat digunakan untuk outlier jika ingin menyimpan outlier sebagai cluster record. Alternatifnya, outlier dapat disimpan tanpa `topic_clusters` dan assignment memiliki null cluster.
-
-Recommended MVP: simpan topic `-1` sebagai outlier agar traceability sederhana.
+`topic_id = -1` digunakan untuk outlier. Outlier tidak dibuat sebagai row `topic_clusters`; assignment tetap dapat menyimpan `topic_cluster_id = null` agar traceability unit tidak hilang.
 
 ### Schema
 
@@ -387,7 +395,8 @@ create table public.topic_clusters (
 
   created_at timestamptz not null default now(),
 
-  unique (analysis_id, topic_id)
+  unique (analysis_id, topic_id),
+  unique (id, analysis_id)
 );
 ```
 
@@ -454,15 +463,20 @@ Menghubungkan analysis unit dengan topic cluster.
 create table public.unit_topic_assignments (
   id uuid primary key default gen_random_uuid(),
 
-  analysis_unit_id uuid not null unique
-    references public.analysis_units(id) on delete cascade,
+  analysis_unit_id uuid not null unique,
 
-  topic_cluster_id uuid
-    references public.topic_clusters(id) on delete set null,
+  analysis_id uuid not null,
+
+  topic_cluster_id uuid,
 
   topic_probability double precision,
 
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+
+  foreign key (analysis_unit_id, analysis_id)
+    references public.analysis_units(id, analysis_id) on delete cascade,
+  foreign key (topic_cluster_id, analysis_id)
+    references public.topic_clusters(id, analysis_id) on delete cascade
 );
 ```
 
@@ -493,7 +507,10 @@ create table public.issues (
 
   dominant_sentiment sentiment_label,
 
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+
+  foreign key (topic_cluster_id, analysis_id)
+    references public.topic_clusters(id, analysis_id) on delete cascade
 );
 ```
 
@@ -685,6 +702,9 @@ create index idx_topic_keywords_cluster
 create index idx_unit_topic_assignments_cluster
   on public.unit_topic_assignments(topic_cluster_id);
 
+create index idx_unit_topic_assignments_analysis
+  on public.unit_topic_assignments(analysis_id);
+
 create index idx_issues_analysis_id
   on public.issues(analysis_id);
 
@@ -740,13 +760,14 @@ create table public.datasets (
   columns_json jsonb,
   file_size_bytes bigint,
   content_hash text,
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  unique (id, user_id)
 );
 
 create table public.analyses (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references public.profiles(id) on delete cascade,
-  dataset_id uuid not null references public.datasets(id) on delete cascade,
+  dataset_id uuid not null,
   name text not null,
   feedback_column text not null,
   date_column text,
@@ -763,7 +784,12 @@ create table public.analyses (
   started_at timestamptz,
   completed_at timestamptz,
   created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
+  updated_at timestamptz not null default now(),
+  unique (id, user_id),
+  unique (id, dataset_id),
+  constraint analyses_dataset_owner_fk
+    foreign key (dataset_id, user_id)
+    references public.datasets(id, user_id) on delete cascade
 );
 
 create table public.feedback_items (
@@ -775,18 +801,27 @@ create table public.feedback_items (
   feedback_date timestamptz,
   metadata jsonb,
   created_at timestamptz not null default now(),
-  unique (dataset_id, source_row_number)
+  unique (dataset_id, source_row_number),
+  unique (id, dataset_id)
 );
 
 create table public.analysis_units (
   id uuid primary key default gen_random_uuid(),
   analysis_id uuid not null references public.analyses(id) on delete cascade,
+  dataset_id uuid not null,
   feedback_item_id uuid not null references public.feedback_items(id) on delete cascade,
   unit_index integer not null,
   raw_text text not null,
   normalized_text text,
   created_at timestamptz not null default now(),
-  unique (analysis_id, feedback_item_id, unit_index)
+  unique (analysis_id, feedback_item_id, unit_index),
+  unique (id, analysis_id),
+  constraint analysis_units_analysis_dataset_fk
+    foreign key (analysis_id, dataset_id)
+    references public.analyses(id, dataset_id) on delete cascade,
+  constraint analysis_units_feedback_dataset_fk
+    foreign key (feedback_item_id, dataset_id)
+    references public.feedback_items(id, dataset_id) on delete cascade
 );
 
 create table public.sentiment_predictions (
@@ -811,7 +846,8 @@ create table public.topic_clusters (
   unit_count integer not null default 0,
   representative_texts jsonb,
   created_at timestamptz not null default now(),
-  unique (analysis_id, topic_id)
+  unique (analysis_id, topic_id),
+  unique (id, analysis_id)
 );
 
 create table public.topic_keywords (
@@ -827,12 +863,17 @@ create table public.topic_keywords (
 
 create table public.unit_topic_assignments (
   id uuid primary key default gen_random_uuid(),
-  analysis_unit_id uuid not null unique
-    references public.analysis_units(id) on delete cascade,
-  topic_cluster_id uuid
-    references public.topic_clusters(id) on delete set null,
+  analysis_unit_id uuid not null unique,
+  analysis_id uuid not null,
+  topic_cluster_id uuid,
   topic_probability double precision,
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  constraint unit_topic_assignments_unit_analysis_fk
+    foreign key (analysis_unit_id, analysis_id)
+    references public.analysis_units(id, analysis_id) on delete cascade,
+  constraint unit_topic_assignments_topic_analysis_fk
+    foreign key (topic_cluster_id, analysis_id)
+    references public.topic_clusters(id, analysis_id) on delete cascade
 );
 
 create table public.issues (
@@ -845,7 +886,10 @@ create table public.issues (
   frequency integer not null default 0,
   score double precision,
   dominant_sentiment sentiment_label,
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  constraint issues_topic_analysis_fk
+    foreign key (topic_cluster_id, analysis_id)
+    references public.topic_clusters(id, analysis_id) on delete cascade
 );
 
 create table public.analysis_metrics (
@@ -884,6 +928,8 @@ create table public.ai_insights (
 ---
 
 ## 19. Row Level Security
+
+Migration executable Week 1 berada di [`supabase/migrations/20260911000000_initial_schema.sql`](../supabase/migrations/20260911000000_initial_schema.sql). Migration tersebut menjadi sumber kebenaran runtime dan menambahkan composite ownership constraint pada hubungan `analyses`–`datasets`, sehingga `user_id` analysis harus sama dengan pemilik dataset.
 
 Jika Supabase digunakan, aktifkan RLS.
 

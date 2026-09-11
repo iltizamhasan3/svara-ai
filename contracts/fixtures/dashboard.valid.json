@@ -1,0 +1,36 @@
+{
+  "analysis": {
+    "id": "00000000-0000-4000-8000-000000000002",
+    "name": "Review Agustus",
+    "status": "completed"
+  },
+  "overview": {
+    "total_feedback": 3,
+    "total_units": 3,
+    "positive": 1,
+    "neutral": 1,
+    "negative": 1,
+    "positive_percentage": 33.33,
+    "neutral_percentage": 33.33,
+    "negative_percentage": 33.34
+  },
+  "topics": [
+    {
+      "topic_id": 1,
+      "label": "OTP / LOGIN",
+      "unit_count": 1,
+      "sentiment": {"positive": 0, "neutral": 0, "negative": 100}
+    }
+  ],
+  "top_issues": [
+    {"text": "otp tidak masuk", "frequency": 1, "topic_id": 1}
+  ],
+  "trend": [
+    {
+      "date": "2026-08-01",
+      "total_units": 1,
+      "sentiment": {"positive": 0, "neutral": 0, "negative": 100}
+    }
+  ],
+  "insight": {"status": "skipped", "summary": null}
+}

@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "svara-ai-backend"
+version = "0.1.0"
+description = "SVARA AI Week 1 FastAPI foundation"
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi>=0.115,<1.0",
+  "pydantic>=2.9,<3.0",
+  "python-multipart>=0.0.20,<1.0",
+  "uvicorn[standard]>=0.34,<1.0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "httpx>=0.28,<1.0",
+  "jsonschema>=4.23,<5.0",
+  "pytest>=8.3,<9.0",
+  "pytest-cov>=6.0,<7.0",
+]
+data = [
+  "pandas>=2.2,<3.0",
+  "openpyxl>=3.1,<4.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["app*"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+addopts = "-q"

@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.coverage
+htmlcov/
+.venv/
+backend/.venv/
+
+# Node / Next.js
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/.turbo/
+*.tsbuildinfo
+npm-debug.log*
+
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+backend/.env
+frontend/.env.local
+
+# Supabase local state
+.supabase/
+supabase/.branches/
+supabase/.temp/
+
+# OS/editor files
+.DS_Store
+.idea/
+.vscode/
+*.swp

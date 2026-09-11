@@ -1,0 +1,17 @@
+{
+  "unit_id": "00000000-0000-4000-8000-000000000001",
+  "source_row_number": 1,
+  "text": "otp tidak masuk",
+  "sentiment": "negative",
+  "confidence": 0.94,
+  "probabilities": {
+    "positive": 0.02,
+    "neutral": 0.04,
+    "negative": 0.94
+  },
+  "topic_id": 1,
+  "keywords": [
+    {"keyword": "otp", "weight": 0.182, "rank": 1},
+    {"keyword": "login", "weight": 0.164, "rank": 2}
+  ]
+}

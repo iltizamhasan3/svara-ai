@@ -3,6 +3,8 @@
 **Target utama:** MVP selesai dan *freeze* pada **Minggu 10**  
 **Minggu 11–14:** evaluasi, perbaikan, dokumentasi, dan presentasi
 
+> Status implementasi: Week 1 foundation selesai. Artefak yang dapat diverifikasi tersedia di `contracts/`, `backend/`, `frontend/`, `supabase/`, dan `scripts/check_week1.py`.
+
 ### Pembagian Role
 1. **Project Lead + AI/NLP Engineer**
 2. **Backend + Data Engineer**
@@ -14,53 +16,64 @@
 # Minggu 1 — Project Foundation & Contract
 
 ### Project Lead + AI/NLP Engineer
-- [ ] Finalisasi *problem statement* SVARA AI
-- [ ] Finalisasi scope MVP
-- [ ] Menentukan pipeline AI/NLP
-- [ ] Mempelajari IndoNLU SmSA dan IGAR
-- [ ] Menentukan pendekatan IndoBERT untuk sentiment analysis
-- [ ] Menentukan pendekatan BERTopic untuk automatic aspect discovery
-- [ ] Menentukan output contract AI
+- [x] Finalisasi *problem statement* SVARA AI
+- [x] Finalisasi scope MVP
+- [x] Menentukan pipeline AI/NLP
+- [x] Mempelajari IndoNLU SmSA dan IGAR
+- [x] Menentukan pendekatan IndoBERT untuk sentiment analysis
+- [x] Menentukan pendekatan BERTopic untuk automatic aspect discovery
+- [x] Menentukan output contract AI
 
 **Output AI Contract:**
 ```json
 {
+  "unit_id": "uuid",
+  "source_row_number": 1,
+  "text": "otp tidak masuk",
   "sentiment": "negative",
   "confidence": 0.92,
+  "probabilities": {
+    "positive": 0.02,
+    "neutral": 0.06,
+    "negative": 0.92
+  },
   "topic_id": 2,
-  "keywords": ["otp", "login", "verifikasi"]
+  "keywords": [
+    {"keyword": "otp", "weight": 0.182, "rank": 1},
+    {"keyword": "login", "weight": 0.164, "rank": 2}
+  ]
 }
 ```
 
 ### Backend + Data Engineer
-- [ ] Setup project FastAPI
-- [ ] Menentukan struktur folder backend
-- [ ] Mendesain database awal
-- [ ] Menentukan struktur dataset internal
-- [ ] Membuat rancangan endpoint API
-- [ ] Menentukan format komunikasi backend dengan AI
+- [x] Setup project FastAPI
+- [x] Menentukan struktur folder backend
+- [x] Mendesain database awal
+- [x] Menentukan struktur dataset internal
+- [x] Membuat rancangan endpoint API
+- [x] Menentukan format komunikasi backend dengan AI
 
 ### Frontend + UI/UX Developer
-- [ ] Setup Next.js/React
-- [ ] Setup Tailwind CSS
-- [ ] Membuat design system sederhana
-- [ ] Membuat wireframe
-- [ ] Mendesain halaman Upload Dataset
-- [ ] Mendesain halaman Dashboard
+- [x] Setup Next.js/React
+- [x] Setup Tailwind CSS
+- [x] Membuat design system sederhana
+- [x] Membuat wireframe
+- [x] Mendesain halaman Upload Dataset
+- [x] Mendesain halaman Dashboard
 
 ### Integration + QA Engineer
-- [ ] Menyusun API contract frontend-backend
-- [ ] Menyusun acceptance criteria MVP
-- [ ] Menentukan skenario testing utama
-- [ ] Setup repository dan branching strategy
-- [ ] Menentukan development environment
+- [x] Menyusun API contract frontend-backend
+- [x] Menyusun acceptance criteria MVP
+- [x] Menentukan skenario testing utama
+- [x] Setup repository dan branching strategy
+- [x] Menentukan development environment
 
 ### Milestone Minggu 1
-- [ ] Scope MVP terkunci
-- [ ] User flow disepakati
-- [ ] AI contract disepakati
-- [ ] API contract disepakati
-- [ ] Wireframe tersedia
+- [x] Scope MVP terkunci
+- [x] User flow disepakati
+- [x] AI contract disepakati
+- [x] API contract disepakati
+- [x] Wireframe tersedia
 
 ---
 

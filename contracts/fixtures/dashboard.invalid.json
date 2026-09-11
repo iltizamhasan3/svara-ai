@@ -1,0 +1,21 @@
+{
+  "analysis": {
+    "id": "00000000-0000-4000-8000-000000000002",
+    "name": "Review Agustus",
+    "status": "completed"
+  },
+  "overview": {
+    "total_feedback": 1,
+    "total_units": 1,
+    "positive": 1,
+    "neutral": 0,
+    "negative": 0,
+    "positive_percentage": 100,
+    "neutral_percentage": 0,
+    "negative_percentage": 0
+  },
+  "topics": [],
+  "top_issues": [],
+  "trend": [{"date": "2026-08-01", "total_units": 1}],
+  "insight": {"status": "skipped", "summary": null}
+}

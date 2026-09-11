@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://svara-ai.local/contracts/dashboard.schema.json",
+  "title": "SVARA AI Dashboard",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["analysis", "overview", "topics", "top_issues", "trend", "insight"],
+  "$defs": {
+    "sentimentBreakdown": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["positive", "neutral", "negative"],
+      "properties": {
+        "positive": {"type": "number", "minimum": 0, "maximum": 100},
+        "neutral": {"type": "number", "minimum": 0, "maximum": 100},
+        "negative": {"type": "number", "minimum": 0, "maximum": 100}
+      }
+    },
+    "topic": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["topic_id", "label", "unit_count", "sentiment"],
+      "properties": {
+        "topic_id": {"type": "integer", "minimum": 0},
+        "label": {"type": "string", "minLength": 1},
+        "unit_count": {"type": "integer", "minimum": 0},
+        "sentiment": {"$ref": "#/$defs/sentimentBreakdown"}
+      }
+    },
+    "issue": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["text", "frequency", "topic_id"],
+      "properties": {
+        "text": {"type": "string", "minLength": 1},
+        "frequency": {"type": "integer", "minimum": 0},
+        "topic_id": {"type": ["integer", "null"], "minimum": 0}
+      }
+    },
+    "trend": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["date", "total_units", "sentiment"],
+      "properties": {
+        "date": {"type": "string", "minLength": 1},
+        "total_units": {"type": "integer", "minimum": 0},
+        "sentiment": {"$ref": "#/$defs/sentimentBreakdown"}
+      }
+    }
+  },
+  "properties": {
+    "analysis": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "status"],
+      "properties": {
+        "id": {"type": "string", "format": "uuid"},
+        "name": {"type": "string", "minLength": 1},
+        "status": {"type": "string", "enum": ["pending", "processing", "completed", "failed"]}
+      }
+    },
+    "overview": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "total_feedback",
+        "total_units",
+        "positive",
+        "neutral",
+        "negative",
+        "positive_percentage",
+        "neutral_percentage",
+        "negative_percentage"
+      ],
+      "properties": {
+        "total_feedback": {"type": "integer", "minimum": 0},
+        "total_units": {"type": "integer", "minimum": 0},
+        "positive": {"type": "integer", "minimum": 0},
+        "neutral": {"type": "integer", "minimum": 0},
+        "negative": {"type": "integer", "minimum": 0},
+        "positive_percentage": {"type": "number", "minimum": 0, "maximum": 100},
+        "neutral_percentage": {"type": "number", "minimum": 0, "maximum": 100},
+        "negative_percentage": {"type": "number", "minimum": 0, "maximum": 100}
+      }
+    },
+    "topics": {"type": "array", "items": {"$ref": "#/$defs/topic"}},
+    "top_issues": {"type": "array", "items": {"$ref": "#/$defs/issue"}},
+    "trend": {"type": "array", "items": {"$ref": "#/$defs/trend"}},
+    "insight": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status"],
+      "properties": {
+        "status": {"type": "string", "enum": ["pending", "completed", "failed", "skipped"]},
+        "summary": {"type": ["string", "null"]}
+      }
+    }
+  }
+}

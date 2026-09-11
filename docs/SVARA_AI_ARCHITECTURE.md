@@ -609,6 +609,8 @@ Base prefix:
 /api/v1
 ```
 
+Kontrak runtime yang dapat divalidasi disimpan di [`docs/SVARA_AI_API_CONTRACT.md`](SVARA_AI_API_CONTRACT.md), sedangkan bentuk output AI kanonik disimpan di [`docs/SVARA_AI_AI_CONTRACT.md`](SVARA_AI_AI_CONTRACT.md) dan [`contracts/ai-result.schema.json`](../contracts/ai-result.schema.json).
+
 ### Dataset
 
 #### `POST /datasets/upload`

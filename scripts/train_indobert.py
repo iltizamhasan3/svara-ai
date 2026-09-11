@@ -107,6 +107,9 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--epochs", type=float, default=1.0)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--max-length", type=int, default=128)
+    parser.add_argument("--train-batch-size", type=int, default=4)
+    parser.add_argument("--eval-batch-size", type=int, default=8)
+    parser.add_argument("--gradient-accumulation-steps", type=int, default=2)
     parser.add_argument("--max-train-rows", type=int, default=None, help="deterministic smoke-test cap")
     parser.add_argument("--allow-test-evaluation", action="store_true", default=False)
     return parser
@@ -239,6 +242,10 @@ def train(args: argparse.Namespace) -> dict[str, Any]:
         raise ValueError("--epochs must be positive")
     if args.max_length < 8:
         raise ValueError("--max-length must be at least 8")
+    if args.train_batch_size < 1 or args.eval_batch_size < 1:
+        raise ValueError("batch sizes must be positive")
+    if args.gradient_accumulation_steps < 1:
+        raise ValueError("--gradient-accumulation-steps must be positive")
     seed = args.seed
     random.seed(seed); np.random.seed(seed); set_seed(seed)
     output_dir = args.output_dir.resolve()
@@ -263,7 +270,8 @@ def train(args: argparse.Namespace) -> dict[str, Any]:
         return {"accuracy": float(accuracy_score(labels, predicted)), "precision": float(precision), "recall": float(recall), "macro_f1": float(f1)}
 
     ta_kwargs: dict[str, Any] = dict(output_dir=str(checkpoint_dir), num_train_epochs=args.epochs, learning_rate=2e-5, weight_decay=.01,
-        per_device_train_batch_size=4, per_device_eval_batch_size=8, gradient_accumulation_steps=2, dataloader_num_workers=0,
+        per_device_train_batch_size=args.train_batch_size, per_device_eval_batch_size=args.eval_batch_size,
+        gradient_accumulation_steps=args.gradient_accumulation_steps, dataloader_num_workers=0,
         seed=seed, report_to=[], logging_strategy="steps", eval_accumulation_steps=1, save_total_limit=1,
         load_best_model_at_end=True, metric_for_best_model="macro_f1", greater_is_better=True)
     ta_params = inspect.signature(TrainingArguments).parameters
@@ -325,7 +333,7 @@ def train(args: argparse.Namespace) -> dict[str, Any]:
     checksums["model-v1/*"] = sha256_tree(model_dir)
     best_checkpoint = getattr(trainer.state, "best_model_checkpoint", None)
     experiment = {"model": MODEL_NAME, "revision": MODEL_REVISION, "preprocessing_version": PREPROCESSING_VERSION,
-        "label_mapping": LABEL_TO_ID, "config": {"seed": seed, "max_length": args.max_length, "train_batch_size": 4, "eval_batch_size": 8, "gradient_accumulation_steps": 2, "epochs": args.epochs, "learning_rate": 2e-5, "weight_decay": .01, "workers": 0, "use_cpu": True},
+        "label_mapping": LABEL_TO_ID, "config": {"seed": seed, "max_length": args.max_length, "train_batch_size": args.train_batch_size, "eval_batch_size": args.eval_batch_size, "gradient_accumulation_steps": args.gradient_accumulation_steps, "epochs": args.epochs, "learning_rate": 2e-5, "weight_decay": .01, "workers": 0, "use_cpu": True},
         "split_manifest_sha256": sha256_file(args.split_manifest.resolve()), "row_counts": {key: len(value) for key, value in prepared.items()},
         "checkpoint_identifier": best_checkpoint,
         "input_split_sha256": {split: split_manifest["splits"][split]["sha256"] for split in SPLITS},

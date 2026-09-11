@@ -91,3 +91,26 @@ def test_igar_sample_rejects_incomplete_label_quotas(tmp_path, monkeypatch):
         downloader.fetch_igar_sample(manifest, destination, sample_size=6)
 
     assert not destination.exists()
+
+
+def test_eda_summary_accepts_external_dataset_directory(tmp_path):
+    prepare = load_script_module(
+        "week2_prepare_for_test",
+        ROOT / "scripts/prepare_week2_data.py",
+    )
+    dataset_path = tmp_path / "external-smsa.tsv"
+    dataset_path.write_text(
+        "Aplikasi bagus sekali\tpositive\nAplikasi lambat\tnegative\n",
+        encoding="utf-8",
+    )
+
+    summary, prepared, report = prepare.split_summary(
+        "train",
+        dataset_path,
+        prepare.read_smsa_rows(dataset_path),
+    )
+
+    assert summary["file"] == str(dataset_path.resolve())
+    assert summary["usable_rows"] == 2
+    assert [row.label for row in prepared] == ["positive", "negative"]
+    assert report.input_rows == 2

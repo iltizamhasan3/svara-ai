@@ -46,6 +46,14 @@ def sha256_file(path: Path) -> str:
     return digest.hexdigest()
 
 
+def display_path(path: Path) -> str:
+    resolved = path.resolve()
+    try:
+        return str(resolved.relative_to(ROOT))
+    except ValueError:
+        return str(resolved)
+
+
 def read_smsa_rows(path: Path) -> list[dict[str, str]]:
     """Read the headerless SmSA TSV format and fail on malformed records."""
 
@@ -114,7 +122,7 @@ def split_summary(
         for label in CANONICAL_LABELS
     }
     summary = {
-        "file": str(path.relative_to(ROOT)),
+        "file": display_path(path),
         "sha256": sha256_file(path),
         "input_rows": report.input_rows,
         "usable_rows": report.output_rows,

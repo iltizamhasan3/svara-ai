@@ -38,3 +38,8 @@ supabase/.temp/
 data/raw/
 data/**/*.part
 data/**/*.tmp
+
+# Local Week 3 model/checkpoint and evaluation outputs.
+artifacts/week3/model-v1/
+artifacts/week3/checkpoints/
+artifacts/week3/checkpoint-*/

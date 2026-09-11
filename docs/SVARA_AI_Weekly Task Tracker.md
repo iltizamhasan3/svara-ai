@@ -85,7 +85,7 @@
 - [x] Melakukan EDA SmSA
 - [x] Mengecek distribusi label
 - [x] Membangun preprocessing awal
-- [ ] Menyiapkan notebook eksperimen IndoBERT
+- [x] Menyiapkan notebook eksperimen IndoBERT
 
 ### Backend + Data Engineer
 - [ ] Implementasi upload CSV

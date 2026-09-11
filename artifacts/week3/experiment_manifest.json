@@ -1,0 +1,64 @@
+{
+  "model": "indobenchmark/indobert-base-p1",
+  "revision": "c2cd0b51ddce6580eb35263b39b0a1e5fb0a39e2",
+  "preprocessing_version": "preprocessing-v1",
+  "label_mapping": {
+    "positive": 0,
+    "neutral": 1,
+    "negative": 2
+  },
+  "config": {
+    "seed": 42,
+    "max_length": 128,
+    "train_batch_size": 16,
+    "eval_batch_size": 32,
+    "gradient_accumulation_steps": 1,
+    "torch_threads": 4,
+    "epochs": 1.0,
+    "learning_rate": 2e-05,
+    "weight_decay": 0.01,
+    "workers": 0,
+    "use_cpu": true
+  },
+  "split_manifest_sha256": "a69f21094fbdec93feff3ec9690df0dc96f5bdad3ce0557c0a74799017e61969",
+  "row_counts": {
+    "train": 10919,
+    "validation": 1260,
+    "test": 500
+  },
+  "checkpoint_identifier": "/home/user/projects/svara-ai/artifacts/week3/checkpoints/checkpoint-683",
+  "input_split_sha256": {
+    "train": "50f38ceed9b31521bf1581e126620532cc9b790712938159a2cdcf6906977a9b",
+    "validation": "6ab41ddc9d58a35086f05ebd2e209c74cb03d87d4f51d6abdfba674eafbefa74",
+    "test": "4e8016daa8e4e1b193f2a28a79d3a7804dd4e3f926a3ab7e8a64264f5f416a6f"
+  },
+  "artifact_paths": {
+    "confusion_matrix_json": "/home/user/projects/svara-ai/artifacts/week3/confusion_matrix.json",
+    "confusion_matrix_csv": "/home/user/projects/svara-ai/artifacts/week3/confusion_matrix.csv",
+    "confusion_matrix_png": "/home/user/projects/svara-ai/artifacts/week3/confusion_matrix.png",
+    "classification_report": "/home/user/projects/svara-ai/artifacts/week3/classification_report.json",
+    "metrics": "/home/user/projects/svara-ai/artifacts/week3/metrics.json",
+    "model": "/home/user/projects/svara-ai/artifacts/week3/model-v1"
+  },
+  "artifact_checksums": {
+    "/home/user/projects/svara-ai/artifacts/week3/confusion_matrix.json": "57f591624775d4d97bd5117a41a0b6feb989d5013b3695bc9c6a6ead9db16404",
+    "/home/user/projects/svara-ai/artifacts/week3/confusion_matrix.csv": "0f47c0cd37c443d6665f6518d394e9c9369e3c9ffc1f900f72c343123af43410",
+    "/home/user/projects/svara-ai/artifacts/week3/confusion_matrix.png": "07b058b6e4f827428ecba06c715bbc5d62db2853f95c23eda3c1ffbaef11f817",
+    "/home/user/projects/svara-ai/artifacts/week3/classification_report.json": "fa1c26853d2fb0c19c9c10b4ae7c972982d6fa30a17df8fb75a735c0a25c6c45",
+    "/home/user/projects/svara-ai/artifacts/week3/metrics.json": "439e7b34521b172bd2781608e174bb7b13bdfd54c9342de6334dcc14a010af99",
+    "model-v1/*": {
+      "config.json": "d12c694e9280e80711e0d8e587b3d8005a50b27a9f8fc530848e51fd1141f182",
+      "model.safetensors": "53b9dd14eb3406114c9eb47d12f3c7a49e035cb3c46ead00d0023a8a8657fbc1",
+      "special_tokens_map.json": "b6d346be366a7d1d48332dbc9fdf3bf8960b5d879522b7799ddba59e76237ee3",
+      "tokenizer.json": "f11fab6108ebecf8d5fdb511f0c736ed110495c26a3ebf0badccbdb32460e0e3",
+      "tokenizer_config.json": "0088a6f8bcdd4014184fb068b83ebb12896a9db2bb269a71f73de83fef24bceb",
+      "training_args.bin": "d1ff79b2bd48a3057230eba40bf24961eed7ac34f0fb715ebb6b145109960258",
+      "vocab.txt": "35cfc7be6dc3ec71102248722f352830a8fd89b5a5dadb83d70c2f7794ddbc11"
+    }
+  },
+  "test_evaluation": {
+    "enabled": false,
+    "status": "not_evaluated"
+  },
+  "igar_external_only": true
+}

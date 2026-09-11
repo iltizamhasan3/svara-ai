@@ -3,7 +3,7 @@
 **Target utama:** MVP selesai dan *freeze* pada **Minggu 10**  
 **Minggu 11–14:** evaluasi, perbaikan, dokumentasi, dan presentasi
 
-> Status implementasi: Week 1 foundation selesai. Artefak yang dapat diverifikasi tersedia di `contracts/`, `backend/`, `frontend/`, `supabase/`, dan `scripts/check_week1.py`.
+> Status implementasi: Week 1 foundation selesai. Scope Project Lead + AI/NLP Engineer untuk Week 2 dan Week 3 juga selesai; artefak model tersedia di `artifacts/week3/`.
 
 ### Pembagian Role
 1. **Project Lead + AI/NLP Engineer**
@@ -120,14 +120,14 @@
 # Minggu 3 — Sentiment Model & Column Mapping
 
 ### Project Lead + AI/NLP Engineer
-- [ ] Fine-tuning IndoBERT dengan SmSA
-- [ ] Evaluasi validation set
-- [ ] Menghasilkan Accuracy
-- [ ] Menghasilkan Precision
-- [ ] Menghasilkan Recall
-- [ ] Menghasilkan Macro F1
-- [ ] Membuat confusion matrix
-- [ ] Menyimpan model versi pertama
+- [x] Fine-tuning IndoBERT dengan SmSA
+- [x] Evaluasi validation set
+- [x] Menghasilkan Accuracy
+- [x] Menghasilkan Precision
+- [x] Menghasilkan Recall
+- [x] Menghasilkan Macro F1
+- [x] Membuat confusion matrix
+- [x] Menyimpan model versi pertama
 
 ### Backend + Data Engineer
 - [ ] Implementasi column mapping
@@ -153,7 +153,7 @@
 - [ ] Test mock analysis flow
 
 ### Milestone Minggu 3
-- [ ] Sentiment model v1 tersedia
+- [x] Sentiment model v1 tersedia
 - [ ] Upload → Mapping → Start Analysis berjalan
 
 ---

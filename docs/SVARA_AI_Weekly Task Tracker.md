@@ -84,7 +84,7 @@
 - [ ] Download/sample IGAR
 - [ ] Melakukan EDA SmSA
 - [ ] Mengecek distribusi label
-- [ ] Membangun preprocessing awal
+- [x] Membangun preprocessing awal
 - [ ] Menyiapkan notebook eksperimen IndoBERT
 
 ### Backend + Data Engineer

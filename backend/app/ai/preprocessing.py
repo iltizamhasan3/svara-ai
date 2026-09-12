@@ -46,6 +46,14 @@ class PreparedRow:
 
 
 @dataclass(frozen=True)
+class PreparedInferenceRow:
+    """A normalized, traceable unlabeled text row for inference."""
+
+    source_row_number: int
+    text: str
+
+
+@dataclass(frozen=True)
 class PreparationReport:
     """Counters describing deterministic row filtering decisions."""
 
@@ -136,6 +144,60 @@ def prepare_labeled_rows(
                 source_row_number=source_row_number,
                 text=text,
                 label=label,
+            )
+        )
+
+    return prepared, PreparationReport(
+        input_rows=input_rows,
+        output_rows=len(prepared),
+        missing_text_rows=missing_text_rows,
+        duplicate_rows=duplicate_rows,
+    )
+
+
+def prepare_inference_rows(
+    rows: Iterable[Mapping[str, object]],
+    *,
+    text_column: str,
+) -> tuple[list[PreparedInferenceRow], PreparationReport]:
+    """Prepare unlabeled rows without changing their order or multiplicity.
+
+    Missing text is skipped, while every retained row keeps its original
+    one-based source row number. The text column must be named and present in
+    each input row so an upload cannot silently produce an empty inference
+    batch.
+    """
+
+    if not isinstance(text_column, str) or not text_column.strip():
+        raise PreprocessingError("text_column is required")
+
+    prepared: list[PreparedInferenceRow] = []
+    seen_texts: set[str] = set()
+    input_rows = 0
+    missing_text_rows = 0
+    duplicate_rows = 0
+
+    for source_row_number, row in enumerate(rows, start=1):
+        input_rows += 1
+        if text_column not in row:
+            raise PreprocessingError(
+                f"text column {text_column!r} is missing from source row "
+                f"{source_row_number}"
+            )
+
+        text = normalize_text(row[text_column])
+        if text.casefold() in _MISSING_TEXT_VALUES:
+            missing_text_rows += 1
+            continue
+
+        text_key = text.casefold()
+        if text_key in seen_texts:
+            duplicate_rows += 1
+        seen_texts.add(text_key)
+        prepared.append(
+            PreparedInferenceRow(
+                source_row_number=source_row_number,
+                text=text,
             )
         )
 

@@ -7,6 +7,7 @@ from app.ai.preprocessing import (
     PreprocessingError,
     normalize_label,
     normalize_text,
+    prepare_inference_rows,
     prepare_labeled_rows,
 )
 
@@ -63,3 +64,32 @@ def test_prepare_rows_rejects_missing_label():
             text_column="text",
             label_column="sentiment",
         )
+
+
+def test_prepare_inference_rows_normalizes_skips_missing_and_preserves_traceability():
+    rows = [
+        {"feedback": "  Bagus\nsekali  "},
+        {"feedback": None},
+        {"feedback": "bagus sekali"},
+        {"feedback": "  OTP masuk 😭!! "},
+    ]
+
+    prepared, report = prepare_inference_rows(rows, text_column="feedback")
+
+    assert [(row.source_row_number, row.text) for row in prepared] == [
+        (1, "Bagus sekali"),
+        (3, "bagus sekali"),
+        (4, "OTP masuk 😭!!"),
+    ]
+    assert report.input_rows == 4
+    assert report.output_rows == 3
+    assert report.missing_text_rows == 1
+    assert report.duplicate_rows == 1
+
+
+def test_prepare_inference_rows_validates_text_column():
+    with pytest.raises(PreprocessingError, match="text_column is required"):
+        prepare_inference_rows([{"feedback": "teks"}], text_column=" ")
+
+    with pytest.raises(PreprocessingError, match="text column 'feedback' is missing"):
+        prepare_inference_rows([{"other": "teks"}], text_column="feedback")

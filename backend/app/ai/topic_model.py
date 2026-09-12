@@ -47,6 +47,10 @@ class TopicModelConfig:
             raise ValueError("hdbscan_min_samples must be positive")
         if self.min_topic_size < 2:
             raise ValueError("min_topic_size must be at least 2")
+        if self.min_topic_size != self.hdbscan_min_cluster_size:
+            raise ValueError(
+                "min_topic_size must match hdbscan_min_cluster_size when using a custom HDBSCAN model"
+            )
         if self.top_n_words < 1:
             raise ValueError("top_n_words must be positive")
         if self.representative_texts < 0:
@@ -90,6 +94,12 @@ def _effective_umap_neighbors(config: TopicModelConfig, document_count: int) -> 
     return min(config.umap_n_neighbors, max(2, document_count - 1))
 
 
+def _effective_umap_components(config: TopicModelConfig, document_count: int) -> int:
+    """Keep spectral initialization within UMAP's small-corpus boundary."""
+
+    return min(config.umap_n_components, max(2, document_count - 2))
+
+
 def _build_bertopic(config: TopicModelConfig, document_count: int) -> Any:
     from bertopic import BERTopic
     from bertopic.vectorizers import ClassTfidfTransformer
@@ -99,7 +109,7 @@ def _build_bertopic(config: TopicModelConfig, document_count: int) -> Any:
 
     umap_model = UMAP(
         n_neighbors=_effective_umap_neighbors(config, document_count),
-        n_components=min(config.umap_n_components, max(2, document_count - 1)),
+        n_components=_effective_umap_components(config, document_count),
         min_dist=config.umap_min_dist,
         metric=config.umap_metric,
         random_state=config.random_state,
@@ -118,7 +128,6 @@ def _build_bertopic(config: TopicModelConfig, document_count: int) -> Any:
     ctfidf_model = ClassTfidfTransformer(reduce_frequent_words=True)
     return BERTopic(
         top_n_words=config.top_n_words,
-        min_topic_size=config.min_topic_size,
         calculate_probabilities=config.calculate_probabilities,
         umap_model=umap_model,
         hdbscan_model=hdbscan_model,
@@ -137,6 +146,8 @@ def _probabilities_for_topics(
 
     matrix = np.asarray(probabilities)
     if matrix.ndim == 1:
+        if matrix.shape[0] != len(topics):
+            return tuple(None for _ in topics)
         values = matrix.tolist()
         return tuple(
             None if topic_id == -1 else float(values[index])
@@ -144,18 +155,27 @@ def _probabilities_for_topics(
         )
     if matrix.ndim != 2 or matrix.shape[0] != len(topics):
         return tuple(None for _ in topics)
+    topic_order = sorted({topic_id for topic_id in topics if topic_id >= 0})
+    topic_to_column = {topic_id: column for column, topic_id in enumerate(topic_order)}
     return tuple(
-        None if topic_id == -1 else float(np.max(matrix[index]))
+        None
+        if topic_id == -1 or topic_to_column.get(topic_id, matrix.shape[1]) >= matrix.shape[1]
+        else float(matrix[index, topic_to_column[topic_id]])
         for index, topic_id in enumerate(topics)
     )
 
 
 def _topic_cluster(model: Any, topic_id: int, unit_count: int, config: TopicModelConfig) -> TopicCluster:
     raw_keywords = model.get_topic(topic_id) or []
+    usable_keywords = [
+        (str(keyword).strip(), float(weight))
+        for keyword, weight in raw_keywords
+        if str(keyword).strip()
+    ]
     keywords = tuple(
-        TopicKeyword(keyword=str(keyword), weight=max(0.0, float(weight)), rank=rank)
+        TopicKeyword(keyword=keyword, weight=max(0.0, weight), rank=rank)
         for rank, (keyword, weight) in enumerate(
-            sorted(raw_keywords, key=lambda item: (-float(item[1]), str(item[0])))[: config.top_n_words],
+            sorted(usable_keywords, key=lambda item: (-item[1], item[0]))[: config.top_n_words],
             start=1,
         )
     )
@@ -203,7 +223,7 @@ def fit_topic_model(
         raise ValueError("texts must contain non-empty values")
     if not np.isfinite(matrix).all():
         raise ValueError("embeddings must contain only finite values")
-    if len(normalized_texts) < 3:
+    if len(normalized_texts) < 4:
         return _empty_result(len(normalized_texts), selected_config, "insufficient_documents")
 
     model = _build_bertopic(selected_config, len(normalized_texts))

@@ -1,0 +1,11 @@
+{
+  "unit_count": 55,
+  "topic_count": 4,
+  "outlier_count": 0,
+  "outlier_rate": 0.0,
+  "keyword_slots": 20,
+  "unique_keyword_count": 20,
+  "topic_diversity": 1.0,
+  "warnings": [],
+  "manual_review_required": true
+}

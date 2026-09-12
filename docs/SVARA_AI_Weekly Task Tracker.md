@@ -161,15 +161,15 @@
 # Minggu 4 — Automatic Aspect Discovery
 
 ### Project Lead + AI/NLP Engineer
-- [ ] Implementasi sentence/clause splitting
-- [ ] Menentukan Sentence Transformer
-- [ ] Menghasilkan text embeddings
-- [ ] Eksperimen BERTopic
-- [ ] Konfigurasi UMAP
-- [ ] Konfigurasi HDBSCAN
-- [ ] Menghasilkan cluster awal
-- [ ] Menghasilkan keyword dengan c-TF-IDF
-- [ ] Mengevaluasi kualitas cluster secara manual
+- [x] Implementasi sentence/clause splitting
+- [x] Menentukan Sentence Transformer
+- [x] Menghasilkan text embeddings
+- [x] Eksperimen BERTopic
+- [x] Konfigurasi UMAP
+- [x] Konfigurasi HDBSCAN
+- [x] Menghasilkan cluster awal
+- [x] Menghasilkan keyword dengan c-TF-IDF
+- [x] Mengevaluasi kualitas cluster secara manual
 
 ### Backend + Data Engineer
 - [ ] Membuat service untuk AI inference
@@ -193,8 +193,8 @@
 - [ ] Validasi konsistensi contract antar-layer
 
 ### Milestone Minggu 4
-- [ ] IndoBERT berjalan
-- [ ] BERTopic menghasilkan cluster
+- [x] IndoBERT berjalan
+- [x] BERTopic menghasilkan cluster
 - [ ] Dashboard mock sudah terlihat
 
 ---

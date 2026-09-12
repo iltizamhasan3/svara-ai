@@ -1,0 +1,159 @@
+{
+  "topic_version": "topic-v1",
+  "clusters": [
+    {
+      "topic_id": 0,
+      "label": "data / lahir / ga / di / tanggal",
+      "unit_count": 20,
+      "keywords": [
+        {
+          "keyword": "data",
+          "weight": 0.4235912618613711,
+          "rank": 1
+        },
+        {
+          "keyword": "lahir",
+          "weight": 0.4235912618613711,
+          "rank": 2
+        },
+        {
+          "keyword": "ga",
+          "weight": 0.4092352665699707,
+          "rank": 3
+        },
+        {
+          "keyword": "di",
+          "weight": 0.38843736098138804,
+          "rank": 4
+        },
+        {
+          "keyword": "tanggal",
+          "weight": 0.37947815868445295,
+          "rank": 5
+        }
+      ],
+      "representative_texts": [
+        "Mau melengkapi akun saja ga bisa utk masukkan data nik n tgl lahir.",
+        "Udh dicoba lengkapi puluhan kali, bahkan smpe uninstal aplikasi n pasang lagi, tetep saja ga bisa masukkan lengkapi akun utk isi NIK n tgl lahir.",
+        "Kenapa ketika edit data nik dan tanggal.lahir sudah beberapa kali dicoba gagal terus mana harus di klik pilhan bulan dan tahun 30 tahun kebelakang lg duh kenapa ga pake cara input manual tgl lahirnya atau ada searching jd ga lama input tgl lahir mana gagal terus pas udah ketemu tgl lahir dan juga kenapa mau download sertifikat di sino ga muncul kalo di browser udah bisa tdnya mau download sertifikat kedua"
+      ]
+    },
+    {
+      "topic_id": 1,
+      "label": "mantap / mohon / 19 / 19 mantap / bahaya covid",
+      "unit_count": 14,
+      "keywords": [
+        {
+          "keyword": "mantap",
+          "weight": 0.8171916726548104,
+          "rank": 1
+        },
+        {
+          "keyword": "mohon",
+          "weight": 0.7488598933919548,
+          "rank": 2
+        },
+        {
+          "keyword": "19",
+          "weight": 0.6607904506980349,
+          "rank": 3
+        },
+        {
+          "keyword": "19 mantap",
+          "weight": 0.6607904506980349,
+          "rank": 4
+        },
+        {
+          "keyword": "bahaya covid",
+          "weight": 0.6607904506980349,
+          "rank": 5
+        }
+      ],
+      "representative_texts": [
+        "pas log in ga bisa🙏😌😌",
+        "Nama dan nik sudah bisa d isi",
+        "Jadi lebih waspada sama bahaya covid 19"
+      ]
+    },
+    {
+      "topic_id": 2,
+      "label": "vaksin / saya / sudah / ada / juga",
+      "unit_count": 14,
+      "keywords": [
+        {
+          "keyword": "vaksin",
+          "weight": 0.5384756728307322,
+          "rank": 1
+        },
+        {
+          "keyword": "saya",
+          "weight": 0.4748909057894324,
+          "rank": 2
+        },
+        {
+          "keyword": "sudah",
+          "weight": 0.454711430786585,
+          "rank": 3
+        },
+        {
+          "keyword": "ada",
+          "weight": 0.4396635457790497,
+          "rank": 4
+        },
+        {
+          "keyword": "juga",
+          "weight": 0.42071696580157986,
+          "rank": 5
+        }
+      ],
+      "representative_texts": [
+        "Gimana sih saya sudah vaksin dua bulan yang lalu sertifikat masih belum keluar juga Pengaduan lewat email sudah saya coba",
+        "tidak ada tanggapan Lewat tlp sudah juga sama saja Terus saya harus mengadu sama siapa lagi,kecewa banget tau gitu ga usah vaksin sekalian",
+        "Terima kasih dg vaksin rasanya aman dari covid dan tidak membahayakan bagi orang lain terutama merasa Merdeka bisa bebas bepergian dan ber aktivitas.Dan yg lebih penting lagi ikut mendukung program kesehatan WHO.Meringankan relawan satgas covid dan bisa memulai pembelajaran tatap muka ber wira usaha menunaikan ibadah haji terbukanya pariwisata seportivitas."
+      ]
+    },
+    {
+      "topic_id": 3,
+      "label": "ok / aamin / bermanfaat oke / halo / halo kak",
+      "unit_count": 7,
+      "keywords": [
+        {
+          "keyword": "ok",
+          "weight": 1.306371194768863,
+          "rank": 1
+        },
+        {
+          "keyword": "aamin",
+          "weight": 1.0563465579205518,
+          "rank": 2
+        },
+        {
+          "keyword": "bermanfaat oke",
+          "weight": 1.0563465579205518,
+          "rank": 3
+        },
+        {
+          "keyword": "halo",
+          "weight": 1.0563465579205518,
+          "rank": 4
+        },
+        {
+          "keyword": "halo kak",
+          "weight": 1.0563465579205518,
+          "rank": 5
+        }
+      ],
+      "representative_texts": [
+        "Oke lah",
+        "Sangat bermanfaat",
+        "Semoga sehat semua , aamin"
+      ]
+    }
+  ],
+  "outlier": {
+    "topic_id": -1,
+    "unit_count": 0,
+    "included_as_cluster": false
+  },
+  "warnings": []
+}

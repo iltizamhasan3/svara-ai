@@ -49,7 +49,7 @@ def read_input_rows(
 ) -> list[dict[str, object]]:
     """Read a CSV/TSV text column without changing the source row order."""
 
-    selected_delimiter = delimiter or ("\t" if path.suffix.casefold() == ".tsv" else ",")
+    selected_delimiter = effective_delimiter(path, delimiter)
     with path.open("r", encoding="utf-8-sig", newline="") as handle:
         if no_header:
             reader = csv.reader(handle, delimiter=selected_delimiter)
@@ -64,6 +64,15 @@ def read_input_rows(
             available = ", ".join(reader.fieldnames or []) or "<none>"
             raise ValueError(f"text column {text_column!r} not found; available: {available}")
         return [dict(row) for row in reader]
+
+
+def effective_delimiter(path: Path, delimiter: str | None = None) -> str:
+    return delimiter or ("\t" if path.suffix.casefold() == ".tsv" else ",")
+
+
+def display_path(path: Path) -> str:
+    resolved = path.resolve()
+    return str(resolved.relative_to(ROOT)) if resolved.is_relative_to(ROOT) else str(resolved)
 
 
 def write_json(path: Path, payload: dict[str, Any]) -> None:
@@ -103,6 +112,42 @@ def write_review_sheet(path: Path, rows: list[dict[str, object]]) -> None:
         writer = csv.DictWriter(handle, fieldnames=fieldnames, lineterminator="\n")
         writer.writeheader()
         writer.writerows(rows)
+
+
+def review_has_manual_entries(path: Path) -> bool:
+    if not path.exists():
+        return False
+    with path.open("r", encoding="utf-8", newline="") as handle:
+        rows = csv.DictReader(handle)
+        return any(
+            row.get("topic_id") != "-1"
+            and (row.get("manual_judgment", "").strip() or row.get("review_notes", "").strip())
+            for row in rows
+        )
+
+
+def review_topic_ids(path: Path) -> set[int]:
+    with path.open("r", encoding="utf-8", newline="") as handle:
+        rows = csv.DictReader(handle)
+        return {
+            int(row["topic_id"])
+            for row in rows
+            if row.get("topic_id") not in {None, "", "-1"}
+        }
+
+
+def should_preserve_review(path: Path, topic_ids: set[int]) -> bool:
+    """Keep completed judgments safe and reject stale topic worksheets."""
+
+    if not review_has_manual_entries(path):
+        return False
+    existing_topic_ids = review_topic_ids(path)
+    if existing_topic_ids != topic_ids:
+        raise ValueError(
+            "manual review topics do not match the new run; use a new output directory "
+            "or pass --overwrite-review"
+        )
+    return True
 
 
 def _package_version(package: str) -> str | None:
@@ -155,6 +200,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--min-topic-size", type=int, default=3)
     parser.add_argument("--top-n-words", type=int, default=5)
     parser.add_argument("--representative-texts", type=int, default=3)
+    parser.add_argument(
+        "--overwrite-review",
+        action="store_true",
+        help="replace a completed manual review worksheet explicitly",
+    )
     return parser
 
 
@@ -202,11 +252,16 @@ def main() -> int:
     metrics_path = output_dir / "topic_metrics.json"
     review_path = output_dir / "manual_evaluation.csv"
     manifest_path = output_dir / "experiment_manifest.json"
+    preserve_review = (
+        not args.overwrite_review
+        and should_preserve_review(review_path, {cluster.topic_id for cluster in result.clusters})
+    )
     np.save(embedding_path, embeddings.vectors)
     write_json(clusters_path, _cluster_payload(result))
     write_assignments(assignments_path, units, result.topic_ids, result.probabilities)
     write_json(metrics_path, topic_metrics(result))
-    write_review_sheet(review_path, manual_review_rows(result))
+    if not preserve_review:
+        write_review_sheet(review_path, manual_review_rows(result))
 
     artifact_paths = {
         "embeddings": embedding_path,
@@ -215,9 +270,8 @@ def main() -> int:
         "topic_metrics": metrics_path,
         "manual_evaluation": review_path,
     }
-    relative_paths = {
-        name: str(path.relative_to(ROOT)) for name, path in artifact_paths.items()
-    }
+    relative_paths = {name: display_path(path) for name, path in artifact_paths.items()}
+    selected_delimiter = effective_delimiter(input_path, args.delimiter)
     manifest = {
         "manifest_version": 1,
         "experiment": "week4_topic_discovery",
@@ -227,6 +281,11 @@ def main() -> int:
             "input_rows_selected": len(rows),
             "analysis_units": len(units),
             "max_rows": args.max_rows,
+        },
+        "input_parsing": {
+            "text_column": args.text_column,
+            "delimiter": selected_delimiter,
+            "no_header": args.no_header,
         },
         "segmentation": {
             "version": SEGMENTATION_VERSION,
@@ -259,6 +318,10 @@ def main() -> int:
         "artifact_paths": relative_paths,
         "artifact_checksums": {
             relative_paths[name]: sha256_file(path) for name, path in artifact_paths.items()
+        },
+        "manual_review": {
+            "status": "preserved" if preserve_review else "template",
+            "overwrite_requires_explicit_flag": True,
         },
         "status": "initial_cluster_experiment",
         "quality_note": "Unsupervised topic discovery; manual review is required before production use.",

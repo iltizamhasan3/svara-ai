@@ -36,3 +36,41 @@ def test_read_input_rows_supports_headerless_tsv(tmp_path):
         {"sentence": "Bagus"},
         {"sentence": "Lambat"},
     ]
+
+
+def test_completed_manual_review_is_preserved_for_matching_topics(tmp_path):
+    runner = load_runner()
+    path = tmp_path / "manual_evaluation.csv"
+    path.write_text(
+        "topic_id,unit_count,keywords,representative_texts,manual_judgment,review_notes\n"
+        "0,2,login,\"[]\",useful,coherent\n"
+        "-1,1,,,outlier,traceable\n",
+        encoding="utf-8",
+    )
+
+    assert runner.review_has_manual_entries(path) is True
+    assert runner.should_preserve_review(path, {0}) is True
+
+
+def test_completed_manual_review_rejects_stale_topics(tmp_path):
+    runner = load_runner()
+    path = tmp_path / "manual_evaluation.csv"
+    path.write_text(
+        "topic_id,unit_count,keywords,representative_texts,manual_judgment,review_notes\n"
+        "0,2,login,\"[]\",useful,coherent\n",
+        encoding="utf-8",
+    )
+
+    try:
+        runner.should_preserve_review(path, {1})
+    except ValueError as exc:
+        assert "new output directory" in str(exc)
+    else:
+        raise AssertionError("stale manual reviews must fail closed")
+
+
+def test_external_artifact_paths_are_serializable(tmp_path):
+    runner = load_runner()
+    external_path = (tmp_path / "week4" / "embeddings.npy").resolve()
+
+    assert runner.display_path(external_path) == str(external_path)

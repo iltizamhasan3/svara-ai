@@ -174,6 +174,12 @@ def _relative_path(path: Path) -> str:
         return str(path.resolve())
 
 
+def _artifact_reference(path: Path, *, output_dir: Path) -> str:
+    """Use output-relative names so reports are reproducible anywhere."""
+
+    return str(path.resolve().relative_to(output_dir.resolve()))
+
+
 def run(args: argparse.Namespace) -> dict[str, Any]:
     input_path = args.input.resolve()
     rows = read_csv_rows(input_path)
@@ -260,10 +266,10 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             "caveat": "The tracked IGAR sample is a small external/domain-validation sample and is not representative of all SVARA feedback.",
         },
         "artifacts": {
-            "predictions": _relative_path(predictions_path),
-            "errors": _relative_path(errors_path),
-            "metrics": _relative_path(metrics_path),
-            "error_report": _relative_path(error_report_path),
+            "predictions": _artifact_reference(predictions_path, output_dir=output_dir),
+            "errors": _artifact_reference(errors_path, output_dir=output_dir),
+            "metrics": _artifact_reference(metrics_path, output_dir=output_dir),
+            "error_report": _artifact_reference(error_report_path, output_dir=output_dir),
         },
     }
     error_payload: dict[str, Any] = {

@@ -103,6 +103,7 @@ def test_run_writes_igar_predictions_metrics_and_errors(tmp_path, monkeypatch):
 
     assert payload["metrics"]["accuracy"] == pytest.approx(2 / 3)
     assert payload["input"]["evaluated_rows"] == 3
+    assert payload["artifacts"]["predictions"] == "igar_predictions.csv"
     assert (output_dir / "igar_predictions.csv").is_file()
     assert (output_dir / "igar_error_analysis.csv").is_file()
     error_report = json.loads((output_dir / "igar_error_analysis.json").read_text())

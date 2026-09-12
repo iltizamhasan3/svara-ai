@@ -148,6 +148,7 @@ def load_sentiment_model(
 
     if torch_threads is not None:
         torch.set_num_threads(torch_threads)
+    torch.use_deterministic_algorithms(True)
 
     try:
         tokenizer = AutoTokenizer.from_pretrained(

@@ -233,6 +233,11 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="train only the classifier head to keep CPU adaptation memory practical",
     )
+    parser.add_argument(
+        "--additional-only",
+        action="store_true",
+        help="train on additional data only while retaining primary validation/test holdouts",
+    )
     parser.add_argument("--output-dir", type=Path, default=ROOT / "artifacts/week3")
     parser.add_argument("--epochs", type=float, default=1.0)
     parser.add_argument("--seed", type=int, default=42)
@@ -362,7 +367,18 @@ def train(args: argparse.Namespace) -> dict[str, Any]:
     additional_report: dict[str, int] | None = None
     if args.additional_split_manifest is not None:
         additional_splits, additional_manifest = load_additional_splits(args.additional_split_manifest)
-        additional_report = merge_additional_training(prepared, additional_splits)
+        if args.additional_only:
+            primary_holdouts = {
+                "train": [],
+                "validation": prepared["validation"],
+                "test": prepared["test"],
+            }
+            additional_report = merge_additional_training(primary_holdouts, additional_splits)
+            prepared["train"] = primary_holdouts["train"]
+        else:
+            additional_report = merge_additional_training(prepared, additional_splits)
+    elif args.additional_only:
+        raise ValueError("--additional-only requires --additional-split-manifest")
     evaluate_test = test_evaluation_allowed(split_manifest, args.allow_test_evaluation)
     if args.max_train_rows is not None:
         if args.max_train_rows < 1:
@@ -518,6 +534,7 @@ def train(args: argparse.Namespace) -> dict[str, Any]:
     experiment = {"model": model_source, "revision": None if args.model_dir is not None else MODEL_REVISION, "preprocessing_version": PREPROCESSING_VERSION,
         "label_mapping": LABEL_TO_ID, "config": {"seed": seed, "max_length": args.max_length, "train_batch_size": args.train_batch_size, "eval_batch_size": args.eval_batch_size, "gradient_accumulation_steps": args.gradient_accumulation_steps, "torch_threads": args.torch_threads, "epochs": args.epochs, "learning_rate": 2e-5, "weight_decay": .01, "workers": 0, "use_cpu": True},
         "model_source": {"path": str(args.model_dir.resolve()) if args.model_dir is not None else None, "freeze_encoder": args.freeze_encoder, "parameter_tensors": trainable_parameter_report},
+        "training_mode": "additional_only" if args.additional_only else "primary_plus_additional" if additional_manifest is not None else "primary_only",
         "split_manifest_sha256": sha256_file(args.split_manifest.resolve()), "row_counts": {key: len(value) for key, value in prepared.items()},
         "checkpoint_identifier": best_checkpoint,
         "input_split_sha256": {split: split_manifest["splits"][split]["sha256"] for split in SPLITS},

@@ -125,6 +125,13 @@ def test_additional_training_manifest_is_loaded_and_merged(tmp_path):
     assert [row.text for row in primary["train"]] == ["primary", "tambahan positif"]
 
 
+def test_additional_only_requires_an_additional_manifest():
+    runner = load_runner()
+    args = runner.build_parser().parse_args(["--additional-only"])
+
+    assert args.additional_only is True
+
+
 def _fixture_manifest(tmp_path: Path, runner, *, checksum_override=_UNSET):
     data_dir = tmp_path / "selected-smsa"
     data_dir.mkdir()

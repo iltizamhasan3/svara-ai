@@ -30,6 +30,7 @@ from app.ai.preprocessing import (  # noqa: E402
     prepare_labeled_rows,
 )
 from app.ai.sentiment_inference import SentimentBatchInferencer  # noqa: E402
+from app.ai.sentiment_ensemble import blend_prediction, load_tfidf_model  # noqa: E402
 
 
 def sha256_file(path: Path) -> str:
@@ -142,6 +143,14 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
     input_path = args.input.resolve()
     rows, preparation_report = read_labeled_tsv(input_path)
     decision_bias = load_decision_bias(args.decision_bias_manifest)
+    tfidf_model_path = getattr(args, "tfidf_model", None)
+    tfidf_manifest_path = getattr(args, "tfidf_manifest", None)
+    bert_weight = getattr(args, "bert_weight", 0.5)
+    tfidf_model = None
+    if tfidf_model_path is not None or tfidf_manifest_path is not None:
+        if tfidf_model_path is None or tfidf_manifest_path is None:
+            raise ValueError("--tfidf-model and --tfidf-manifest must be provided together")
+        tfidf_model = load_tfidf_model(tfidf_model_path, tfidf_manifest_path)
     inferencer = SentimentBatchInferencer.from_pretrained(
         str(args.model_dir.resolve()),
         batch_size=args.batch_size,
@@ -150,11 +159,17 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         local_files_only=True,
         torch_threads=args.torch_threads,
         export_manifest_path=args.export_manifest,
-        decision_bias=decision_bias,
+        decision_bias=None if tfidf_model is not None else decision_bias,
     )
     predictions = inferencer.predict_prepared_rows(
         [PreparedInferenceRow(row.source_row_number, row.text) for row in rows]
     )
+    if tfidf_model is not None:
+        tfidf_probabilities = tfidf_model.predict_proba([row.text for row in rows])
+        predictions = [
+            blend_prediction(prediction, tfidf_values, bert_weight=bert_weight, decision_bias=decision_bias)
+            for prediction, tfidf_values in zip(predictions, tfidf_probabilities, strict=True)
+        ]
     expected = [normalize_label(row.label) for row in rows]
     predicted = [prediction.sentiment for prediction in predictions]
     bundle = inferencer.loaded_model.bundle
@@ -185,6 +200,9 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
                 else None
             ),
             "decision_bias": decision_bias,
+            "tfidf_model": str(tfidf_model_path.resolve()) if tfidf_model_path else None,
+            "tfidf_manifest": str(tfidf_manifest_path.resolve()) if tfidf_manifest_path else None,
+            "bert_weight": bert_weight if tfidf_model is not None else None,
         },
         **classification_metrics(expected, predicted),
         "evaluation_policy": {
@@ -193,6 +211,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             "igar_metrics_used": False,
             "training_or_tuning": False,
             "decision_bias_applied": decision_bias is not None,
+            "tfidf_used": tfidf_model is not None,
         },
     }
     if args.output is not None:
@@ -218,6 +237,9 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--batch-size", type=int, default=8)
     parser.add_argument("--max-length", type=int, default=128)
     parser.add_argument("--torch-threads", type=int, default=4)
+    parser.add_argument("--tfidf-model", type=Path, default=None)
+    parser.add_argument("--tfidf-manifest", type=Path, default=None)
+    parser.add_argument("--bert-weight", type=float, default=0.5)
     return parser
 
 

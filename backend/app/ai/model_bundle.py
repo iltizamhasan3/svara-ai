@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
@@ -21,6 +22,10 @@ MODEL_RELEASE_URL = (
     "https://github.com/iltizamhasan3/svara-ai/releases/tag/ai-model-v1.0.0"
 )
 MODEL_RELEASE_ASSET = "svara-ai-sentiment-model-v1.tar.gz"
+DEFAULT_EXPORT_MANIFEST = (
+    Path(__file__).resolve().parents[3]
+    / "artifacts/week5/sentiment_model_export_manifest.json"
+)
 
 # These are the files required by Transformers for local CPU inference. The
 # training-only ``training_args.bin`` file is intentionally not required.
@@ -62,6 +67,14 @@ class LoadedSentimentModel:
     device: str
 
 
+def _sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
 def _config_label_mapping(config: Mapping[str, Any]) -> tuple[dict[str, int], dict[int, str]]:
     raw_id_to_label = config.get("id2label")
     raw_label_to_id = config.get("label2id")
@@ -83,8 +96,67 @@ def _config_label_mapping(config: Mapping[str, Any]) -> tuple[dict[str, int], di
     return label_to_id, id_to_label
 
 
-def validate_model_bundle(model_dir: Path | str) -> SentimentModelBundle:
-    """Validate required files and the canonical three-label model mapping."""
+def _verify_export_manifest(bundle_path: Path, manifest_path: Path) -> None:
+    """Verify bundle identity and bytes against a trusted export manifest."""
+
+    if not manifest_path.is_file():
+        raise ModelBundleError(f"trusted export manifest does not exist: {manifest_path}")
+    try:
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise ModelBundleError(f"could not read trusted export manifest: {manifest_path}") from exc
+    if not isinstance(manifest, Mapping):
+        raise ModelBundleError("trusted export manifest must contain a JSON object")
+
+    expected_identity = {
+        "model_version": SENTIMENT_MODEL_VERSION,
+        "model": MODEL_NAME,
+        "revision": MODEL_REVISION,
+        "preprocessing_version": PREPROCESSING_VERSION,
+        "label_mapping": LABEL_TO_ID,
+    }
+    for field, expected in expected_identity.items():
+        if manifest.get(field) != expected:
+            raise ModelBundleError(
+                f"trusted export manifest {field!r} does not match the Week 5 model identity"
+            )
+
+    bundle_metadata = manifest.get("bundle")
+    manifest_files = bundle_metadata.get("files") if isinstance(bundle_metadata, Mapping) else None
+    if not isinstance(manifest_files, Mapping):
+        raise ModelBundleError("trusted export manifest must include bundle file checksums")
+
+    for filename in REQUIRED_INFERENCE_FILES:
+        file_metadata = manifest_files.get(filename)
+        if not isinstance(file_metadata, Mapping):
+            raise ModelBundleError(
+                f"trusted export manifest has no checksum for {filename}"
+            )
+        expected_size = file_metadata.get("size_bytes")
+        expected_sha256 = file_metadata.get("sha256")
+        actual_path = bundle_path / filename
+        if expected_size != actual_path.stat().st_size:
+            raise ModelBundleError(
+                f"model bundle size mismatch for {filename}; trusted export does not match"
+            )
+        if expected_sha256 != _sha256_file(actual_path):
+            raise ModelBundleError(
+                f"model bundle checksum mismatch for {filename}; trusted export does not match"
+            )
+
+
+def validate_model_bundle(
+    model_dir: Path | str,
+    *,
+    manifest_path: Path | str | None = None,
+    verify_export_manifest: bool = True,
+) -> SentimentModelBundle:
+    """Validate files, labels, and (by default) the trusted export manifest.
+
+    ``verify_export_manifest=False`` is reserved for the exporter while it is
+    creating a new manifest and for isolated unit fixtures. Runtime loading
+    keeps verification enabled by default.
+    """
 
     path = Path(model_dir).expanduser().resolve()
     if not path.is_dir():
@@ -109,6 +181,13 @@ def validate_model_bundle(model_dir: Path | str) -> SentimentModelBundle:
             "model label mapping does not match canonical order "
             f"{LABEL_TO_ID}"
         )
+    if verify_export_manifest:
+        trusted_manifest = (
+            Path(manifest_path).expanduser().resolve()
+            if manifest_path is not None
+            else DEFAULT_EXPORT_MANIFEST
+        )
+        _verify_export_manifest(path, trusted_manifest)
 
     return SentimentModelBundle(
         path=path,
@@ -128,6 +207,7 @@ def load_sentiment_model(
     device: str = "cpu",
     local_files_only: bool = True,
     torch_threads: int | None = 4,
+    export_manifest_path: Path | str | None = None,
 ) -> LoadedSentimentModel:
     """Load a validated Transformers bundle without implicit model downloads."""
 
@@ -136,7 +216,7 @@ def load_sentiment_model(
     if torch_threads is not None and torch_threads < 1:
         raise ModelBundleError("torch_threads must be positive when provided")
 
-    bundle = validate_model_bundle(model_dir)
+    bundle = validate_model_bundle(model_dir, manifest_path=export_manifest_path)
 
     try:
         import torch

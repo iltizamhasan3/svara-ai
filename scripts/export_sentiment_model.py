@@ -43,7 +43,7 @@ def _display_path(path: Path, *, root: Path) -> str:
 def build_export_manifest(model_dir: Path, *, root: Path = ROOT) -> dict[str, Any]:
     """Return portable metadata and checksums for a validated model bundle."""
 
-    bundle = validate_model_bundle(model_dir)
+    bundle = validate_model_bundle(model_dir, verify_export_manifest=False)
     files = {
         filename: {
             "size_bytes": (bundle.path / filename).stat().st_size,

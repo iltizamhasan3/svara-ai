@@ -39,7 +39,7 @@ def _write_fake_bundle(tmp_path: Path, *, mapping=None) -> Path:
 def test_validate_model_bundle_requires_canonical_inference_files(tmp_path):
     bundle = _write_fake_bundle(tmp_path)
 
-    validated = validate_model_bundle(bundle)
+    validated = validate_model_bundle(bundle, verify_export_manifest=False)
 
     assert validated.path == bundle.resolve()
     assert dict(validated.label_to_id) == LABEL_TO_ID
@@ -51,14 +51,14 @@ def test_validate_model_bundle_rejects_missing_file(tmp_path):
     (bundle / "model.safetensors").unlink()
 
     with pytest.raises(ModelBundleError, match="model.safetensors"):
-        validate_model_bundle(bundle)
+        validate_model_bundle(bundle, verify_export_manifest=False)
 
 
 def test_validate_model_bundle_rejects_noncanonical_mapping(tmp_path):
     bundle = _write_fake_bundle(tmp_path, mapping={0: "negative", 1: "neutral", 2: "positive"})
 
     with pytest.raises(ModelBundleError, match="canonical order"):
-        validate_model_bundle(bundle)
+        validate_model_bundle(bundle, verify_export_manifest=False)
 
 
 def _load_exporter():
@@ -81,3 +81,19 @@ def test_export_manifest_uses_relative_bundle_path(tmp_path):
     assert manifest["label_mapping"] == LABEL_TO_ID
     assert set(manifest["bundle"]["files"]) == set(REQUIRED_INFERENCE_FILES)
     assert all(len(details["sha256"]) == 64 for details in manifest["bundle"]["files"].values())
+
+
+def test_validate_model_bundle_rejects_modified_file_against_trusted_manifest(tmp_path):
+    bundle = _write_fake_bundle(tmp_path)
+    exporter = _load_exporter()
+    manifest_path = tmp_path / "manifest.json"
+    manifest_path.write_text(
+        json.dumps(exporter.build_export_manifest(bundle, root=tmp_path)),
+        encoding="utf-8",
+    )
+
+    validate_model_bundle(bundle, manifest_path=manifest_path)
+    (bundle / "model.safetensors").write_bytes(b"replacement")
+
+    with pytest.raises(ModelBundleError, match="checksum mismatch"):
+        validate_model_bundle(bundle, manifest_path=manifest_path)

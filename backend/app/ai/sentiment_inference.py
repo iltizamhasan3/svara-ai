@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 from app.ai.model_bundle import LoadedSentimentModel, load_sentiment_model
@@ -59,6 +60,7 @@ class SentimentBatchInferencer:
         device: str = "cpu",
         local_files_only: bool = True,
         torch_threads: int | None = 4,
+        export_manifest_path: Path | str | None = None,
     ) -> "SentimentBatchInferencer":
         """Load a local export and construct the batch adapter."""
 
@@ -67,6 +69,7 @@ class SentimentBatchInferencer:
             device=device,
             local_files_only=local_files_only,
             torch_threads=torch_threads,
+            export_manifest_path=export_manifest_path,
         )
         return cls(loaded_model, batch_size=batch_size, max_length=max_length)
 

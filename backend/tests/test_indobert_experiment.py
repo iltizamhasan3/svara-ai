@@ -38,6 +38,65 @@ def test_test_evaluation_requires_frozen_manifest():
     assert runner.test_evaluation_allowed({"test_evaluation_frozen": True}, True) is True
 
 
+def test_igar_training_path_is_rejected():
+    runner = load_runner()
+
+    with pytest.raises(ValueError, match="sealed external-test"):
+        runner.assert_not_igar_training_path(ROOT / "data/raw/igar/Rating_labeled.csv")
+
+
+def test_additional_training_manifest_is_loaded_and_merged(tmp_path):
+    runner = load_runner()
+    extra_dir = tmp_path / "idsmsa"
+    extra_dir.mkdir()
+    contents = {
+        "idsmsa_train.tsv": "tambahan positif\tpositive\n",
+        "idsmsa_validation.tsv": "tambahan netral\tneutral\n",
+        "idsmsa_test.tsv": "tambahan negatif\tnegative\n",
+    }
+    split_details = {}
+    for filename, content in contents.items():
+        path = extra_dir / filename
+        path.write_text(content, encoding="utf-8")
+        split = filename.removeprefix("idsmsa_").removesuffix(".tsv")
+        split_details[split] = {
+            "file": filename,
+            "sha256": runner.sha256_file(path),
+            "rows": 1,
+        }
+    manifest_path = extra_dir / "idsmsa_split_manifest.json"
+    manifest_path.write_text(
+        json.dumps(
+            {
+                "dataset": "ID-SMSA",
+                "training_policy": {
+                    "igar_forbidden": True,
+                    "igar_labels_used": False,
+                    "igar_metrics_used": False,
+                },
+                "splits": split_details,
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    additional, _ = runner.load_additional_splits(manifest_path)
+    primary = {
+        "train": [runner.PreparedRow(1, "primary", "positive")],
+        "validation": [runner.PreparedRow(2, "validation", "neutral")],
+        "test": [runner.PreparedRow(3, "test", "negative")],
+    }
+    report = runner.merge_additional_training(primary, additional)
+
+    assert report == {
+        "source_train_rows": 1,
+        "accepted_train_rows": 1,
+        "duplicate_rows_removed": 0,
+        "conflicting_rows": 0,
+    }
+    assert [row.text for row in primary["train"]] == ["primary", "tambahan positif"]
+
+
 def _fixture_manifest(tmp_path: Path, runner, *, checksum_override=_UNSET):
     data_dir = tmp_path / "selected-smsa"
     data_dir.mkdir()

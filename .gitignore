@@ -44,3 +44,6 @@ data/**/*.tmp
 artifacts/week3/model-v1/
 artifacts/week3/checkpoints/
 artifacts/week3/checkpoint-*/
+artifacts/week6/**/model-v1/
+artifacts/week6/**/checkpoints/
+artifacts/week6/**/checkpoint-*/

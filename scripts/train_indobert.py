@@ -67,6 +67,93 @@ def read_smsa(path: Path) -> list[dict[str, str]]:
     return rows
 
 
+def assert_not_igar_training_path(path: Path) -> None:
+    """Fail closed if a training split path is an IGAR payload."""
+
+    resolved = path.resolve()
+    if "igar" in {part.casefold() for part in resolved.parts} or "rating_labeled" in resolved.name.casefold():
+        raise ValueError("IGAR is sealed external-test data and cannot be a training input")
+
+
+def _resolve_manifest_file(manifest_path: Path, manifest_file: str) -> Path:
+    candidate = Path(manifest_file)
+    return candidate if candidate.is_absolute() else manifest_path.parent / candidate
+
+
+def load_additional_splits(manifest_path: Path) -> tuple[dict[str, list[PreparedRow]], dict[str, Any]]:
+    """Load a prepared, non-IGAR additional training dataset."""
+
+    manifest_path = manifest_path.resolve()
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    if manifest.get("dataset") != "ID-SMSA":
+        raise ValueError("additional split manifest must describe ID-SMSA")
+    policy = manifest.get("training_policy")
+    if not isinstance(policy, Mapping) or policy.get("igar_forbidden") is not True:
+        raise ValueError("additional split manifest must explicitly forbid IGAR")
+    if policy.get("igar_labels_used") is not False or policy.get("igar_metrics_used") is not False:
+        raise ValueError("additional split manifest must prove that IGAR labels and metrics were unused")
+
+    prepared: dict[str, list[PreparedRow]] = {}
+    for split in SPLITS:
+        details = manifest.get("splits", {}).get(split)
+        if not isinstance(details, Mapping):
+            raise ValueError(f"additional split manifest is missing {split}")
+        path = _resolve_manifest_file(manifest_path, str(details["file"]))
+        assert_not_igar_training_path(path)
+        if not path.is_file():
+            raise FileNotFoundError(path)
+        expected_sha256 = details.get("sha256")
+        if not isinstance(expected_sha256, str) or re.fullmatch(r"[0-9a-fA-F]{64}", expected_sha256) is None:
+            raise ValueError(f"{path}: additional split must include a 64-character SHA-256")
+        if sha256_file(path).casefold() != expected_sha256.casefold():
+            raise ValueError(f"{path}: SHA-256 does not match additional split manifest")
+        rows, _ = prepare_labeled_rows(
+            read_smsa(path),
+            text_column="sentence",
+            label_column="label",
+        )
+        if len(rows) != details.get("rows"):
+            raise ValueError(f"{path}: row count does not match additional split manifest")
+        prepared[split] = rows
+    assert_disjoint_splits(prepared)
+    return prepared, manifest
+
+
+def merge_additional_training(
+    primary_splits: dict[str, list[PreparedRow]],
+    additional_splits: Mapping[str, list[PreparedRow]],
+) -> dict[str, int]:
+    """Add only disjoint additional train rows to the SmSA training view."""
+
+    protected: dict[str, str] = {
+        normalize_text(row.text).casefold(): row.label
+        for rows in primary_splits.values()
+        for row in rows
+    }
+    accepted: list[PreparedRow] = []
+    duplicate_rows = 0
+    conflicting_rows = 0
+    for row in additional_splits["train"]:
+        key = normalize_text(row.text).casefold()
+        if key in protected:
+            duplicate_rows += 1
+            if protected[key] != row.label:
+                conflicting_rows += 1
+            continue
+        protected[key] = row.label
+        accepted.append(row)
+    if conflicting_rows:
+        raise ValueError("additional training contains labels conflicting with SmSA protected rows")
+    primary_splits["train"].extend(accepted)
+    assert_disjoint_splits(primary_splits)
+    return {
+        "source_train_rows": len(additional_splits["train"]),
+        "accepted_train_rows": len(accepted),
+        "duplicate_rows_removed": duplicate_rows,
+        "conflicting_rows": conflicting_rows,
+    }
+
+
 def assert_disjoint_splits(splits: Mapping[str, Iterable[PreparedRow]]) -> None:
     """Fail closed if normalized text occurs in two prepared splits."""
 
@@ -103,6 +190,12 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--data-dir", type=Path, default=ROOT / "data/raw/smsa")
     parser.add_argument("--split-manifest", type=Path, default=ROOT / "artifacts/week2/smsa_split_manifest.json")
+    parser.add_argument(
+        "--additional-split-manifest",
+        type=Path,
+        default=None,
+        help="prepared non-IGAR additional dataset manifest (for Week 6 adaptation)",
+    )
     parser.add_argument("--output-dir", type=Path, default=ROOT / "artifacts/week3")
     parser.add_argument("--epochs", type=float, default=1.0)
     parser.add_argument("--seed", type=int, default=42)
@@ -227,6 +320,12 @@ def _prediction_artifacts(rows: list[PreparedRow], prediction_output: Any, np: A
 
 def train(args: argparse.Namespace) -> dict[str, Any]:
     prepared, split_manifest = load_splits(args.data_dir.resolve(), args.split_manifest.resolve())
+    additional_splits: dict[str, list[PreparedRow]] | None = None
+    additional_manifest: dict[str, Any] | None = None
+    additional_report: dict[str, int] | None = None
+    if args.additional_split_manifest is not None:
+        additional_splits, additional_manifest = load_additional_splits(args.additional_split_manifest)
+        additional_report = merge_additional_training(prepared, additional_splits)
     evaluate_test = test_evaluation_allowed(split_manifest, args.allow_test_evaluation)
     if args.max_train_rows is not None:
         if args.max_train_rows < 1:
@@ -267,6 +366,16 @@ def train(args: argparse.Namespace) -> dict[str, Any]:
         rows = prepared[split]
         encoded[split] = Dataset.from_dict({"text": [r.text for r in rows], "labels": [LABEL_TO_ID[r.label] for r in rows]})
         encoded[split] = encoded[split].map(lambda batch: tokenizer(batch["text"], truncation=True, max_length=args.max_length), batched=True, remove_columns=["text"])
+    if additional_splits is not None:
+        rows = additional_splits["validation"]
+        encoded["additional_validation"] = Dataset.from_dict(
+            {"text": [r.text for r in rows], "labels": [LABEL_TO_ID[r.label] for r in rows]}
+        )
+        encoded["additional_validation"] = encoded["additional_validation"].map(
+            lambda batch: tokenizer(batch["text"], truncation=True, max_length=args.max_length),
+            batched=True,
+            remove_columns=["text"],
+        )
 
     def metrics(eval_pred: Any) -> dict[str, float]:
         predictions, labels = eval_pred
@@ -303,6 +412,15 @@ def train(args: argparse.Namespace) -> dict[str, Any]:
     }
     validation_predictions = trainer.predict(encoded["validation"])
     validation_artifacts = _prediction_artifacts(prepared["validation"], validation_predictions, np, metrics_api)
+    additional_validation_artifacts = None
+    if additional_splits is not None:
+        additional_validation_predictions = trainer.predict(encoded["additional_validation"])
+        additional_validation_artifacts = _prediction_artifacts(
+            additional_splits["validation"],
+            additional_validation_predictions,
+            np,
+            metrics_api,
+        )
     test_artifacts = None
     if evaluate_test:
         test_predictions = trainer.predict(encoded["test"])
@@ -329,6 +447,8 @@ def train(args: argparse.Namespace) -> dict[str, Any]:
         test_report_path.write_text(json.dumps(test_artifacts["classification_report"], indent=2, default=float) + "\n", encoding="utf-8")
         artifact_paths["test_classification_report"] = str(test_report_path)
         result["test"] = test_artifacts
+    if additional_validation_artifacts is not None:
+        result["additional_validation"] = additional_validation_artifacts
     metrics_path.write_text(json.dumps(result, indent=2, default=float) + "\n", encoding="utf-8")
     artifact_paths["metrics"] = str(metrics_path)
     artifact_paths["model"] = str(model_dir)
@@ -345,6 +465,13 @@ def train(args: argparse.Namespace) -> dict[str, Any]:
         "checkpoint_identifier": best_checkpoint,
         "input_split_sha256": {split: split_manifest["splits"][split]["sha256"] for split in SPLITS},
         "artifact_paths": artifact_paths, "artifact_checksums": checksums, "test_evaluation": {"enabled": evaluate_test, "status": "evaluated" if evaluate_test else "not_evaluated"},
+        "additional_training": {
+            "enabled": additional_manifest is not None,
+            "dataset": "ID-SMSA" if additional_manifest is not None else None,
+            "manifest_sha256": sha256_file(args.additional_split_manifest.resolve()) if additional_manifest is not None else None,
+            "report": additional_report,
+            "validation_evaluated": additional_validation_artifacts is not None,
+        },
         "igar_external_only": True}
     (output_dir / "experiment_manifest.json").write_text(json.dumps(experiment, indent=2) + "\n", encoding="utf-8")
     return experiment

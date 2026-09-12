@@ -1,7 +1,7 @@
-# Week 2 datasets
+# Dataset sources
 
-This directory contains provenance for the Week 2 AI training and validation
-inputs. Dataset payloads are downloaded locally into `data/raw/` and are
+This directory contains provenance for the AI training and validation inputs.
+Dataset payloads are downloaded locally into `data/raw/` and are
 ignored by Git. The deterministic, small IGAR sample under `data/samples/` is
 the only data payload intended to be tracked.
 
@@ -10,6 +10,8 @@ Run from the repository root:
 ```bash
 python3 scripts/download_week2_datasets.py --help
 python3 scripts/download_week2_datasets.py
+python3 scripts/download_idsmsa_training.py --help
+python3 scripts/download_idsmsa_training.py
 ```
 
 The default output root is this `data/` directory. Use `--output-root` to
@@ -50,8 +52,17 @@ The full file must never be used for training, validation selection,
 calibration, thresholding, or augmentation. Training data additions belong in
 separate, provenance- and license-checked sources.
 
-See `data/manifests/week2_sources.json` for exact URLs, expected hashes and
-sizes, schemas, licenses, and provenance caveats.
+* **ID-SMSA (Indonesian Stock Market Dataset for Sentiment Analysis)** is an
+  independent, manually annotated Indonesian three-class sentiment source.
+  Version 3 is pinned to Mendeley Data DOI `10.17632/tn4vzs8tdw.3`, licensed
+  under CC BY 4.0, and downloaded to the ignored path
+  `data/raw/idsmsa/IDSMSA.csv`. It is an optional additional training source,
+  not a replacement for SmSA. Its source domain is financial-market discourse,
+  so evaluation must report it separately from SmSA and IGAR.
+
+See `data/manifests/week2_sources.json` and
+`data/manifests/week6_training_sources.json` for exact URLs, expected hashes
+and sizes, schemas, licenses, and provenance caveats.
 
 The full IGAR SHA-256 and byte size in the manifest come from Mendeley's public
 file metadata. Because the downloader intentionally stops after the requested

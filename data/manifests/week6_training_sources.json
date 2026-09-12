@@ -1,0 +1,35 @@
+{
+  "manifest_version": 1,
+  "training_policy": {
+    "igar_forbidden": true,
+    "igar_role": "sealed_external_test_only",
+    "allowed_training_sources": ["SmSA", "ID-SMSA"]
+  },
+  "sources": {
+    "idsmsa": {
+      "dataset": "ID-SMSA: Indonesian Stock Market Dataset for Sentiment Analysis",
+      "doi": "10.17632/tn4vzs8tdw.3",
+      "landing_url": "https://data.mendeley.com/datasets/tn4vzs8tdw/3",
+      "metadata_url": "https://data.mendeley.com/public-api/datasets/tn4vzs8tdw?version=3",
+      "files_url": "https://data.mendeley.com/public-api/datasets/tn4vzs8tdw/files?version=3&folder_id=root",
+      "file_name": "IDSMSA.csv",
+      "license": "CC BY 4.0",
+      "schema": [
+        "Tweet Date",
+        "Sentence",
+        "Quote Count",
+        "Reply Count",
+        "Retweet Count",
+        "Favorite Count",
+        "Sentiment",
+        "English Translation"
+      ],
+      "labels": ["Negative", "Neutral", "Positive"],
+      "expected_rows": 3288,
+      "expected_size_bytes": 1091613,
+      "expected_sha256": "46f817c3442538036ef2b35a1e962f1395459cb9336686d4aac0298befb29fa4",
+      "role": "additional_training",
+      "citation": "Hartanto, Liundi, Sutoyo, and Andangsari (2025), Data in Brief 60, 111571, DOI 10.1016/j.dib.2025.111571."
+    }
+  }
+}

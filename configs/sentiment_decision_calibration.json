@@ -1,0 +1,41 @@
+{
+  "artifact_version": 1,
+  "calibrated": {
+    "biases": {
+      "positive": 0.0,
+      "neutral": -0.55,
+      "negative": -0.45
+    },
+    "selection_metric": "accuracy",
+    "primary_validation": {
+      "dataset": "Indonesian Google Play Review validation",
+      "accuracy": 0.8265524625267666,
+      "macro_f1": 0.5584743294659215
+    },
+    "guard_validation": {
+      "dataset": "SmSA validation",
+      "accuracy": 0.9373015873015873,
+      "macro_f1": 0.909920325120719
+    }
+  },
+  "source": {
+    "model": "artifacts/week6/google-play-head-candidate-lr1e-4/model-v1",
+    "tuning_input": "data/processed/week6/google_play_review/google_play_review_validation.tsv",
+    "guard_input": "data/raw/smsa/valid_preprocess.tsv",
+    "grid": {
+      "bias_min": -1.5,
+      "bias_max": 1.5,
+      "bias_step": 0.05,
+      "primary_accuracy_floor": 0.7987,
+      "primary_macro_f1_floor": 0.5563,
+      "min_guard_accuracy": 0.937,
+      "min_guard_macro_f1": 0.909
+    }
+  },
+  "evaluation_policy": {
+    "igar_read": false,
+    "igar_labels_used": false,
+    "igar_metrics_used": false,
+    "training_or_tuning": true
+  }
+}

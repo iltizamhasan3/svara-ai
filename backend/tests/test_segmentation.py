@@ -15,6 +15,11 @@ def test_sentence_split_preserves_punctuation_and_avoids_decimal_and_abbreviatio
         "Sangat bagus?",
     ]
 
+    assert split_sentences("Disetujui a.n. Budi. Proses selesai.") == [
+        "Disetujui a.n. Budi.",
+        "Proses selesai.",
+    ]
+
 
 def test_clause_split_targets_contrastive_conjunctions_only():
     text = "Makanannya enak tetapi pelayanannya lambat dan tempatnya ramai."

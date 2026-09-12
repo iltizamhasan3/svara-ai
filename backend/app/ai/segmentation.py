@@ -13,8 +13,8 @@ SEGMENTATION_VERSION = "segmentation-v1"
 _MISSING_TEXT_VALUES = {"", "na", "n/a", "nan", "none", "null"}
 _CLOSING_CHARS = frozenset('"\'”’»)]}')
 _ABBREVIATIONS = {
-    "a.n.",
-    "an.",
+    "a.n",
+    "an",
     "dr",
     "etc",
     "no",

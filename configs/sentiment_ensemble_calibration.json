@@ -1,0 +1,45 @@
+{
+  "artifact_version": 1,
+  "ensemble": {
+    "bert_weight": 0.7,
+    "tfidf_weight": 0.3,
+    "tfidf_model": "artifacts/tuning/google-play-tfidf-word12-balanced-c4/tfidf_sentiment.joblib",
+    "tfidf_manifest": "artifacts/tuning/google-play-tfidf-word12-balanced-c4/tfidf_sentiment_manifest.json"
+  },
+  "calibrated": {
+    "biases": {
+      "positive": 0.0,
+      "neutral": 0.1,
+      "negative": -0.4
+    },
+    "selection_metric": "accuracy",
+    "primary_validation": {
+      "dataset": "Indonesian Google Play Review validation",
+      "accuracy": 0.8351177730192719,
+      "macro_f1": 0.5752325697473928
+    },
+    "guard_validation": {
+      "dataset": "SmSA validation",
+      "accuracy": 0.9388888888888889,
+      "macro_f1": 0.911445184872656
+    }
+  },
+  "source": {
+    "bert_model": "artifacts/week6/google-play-head-candidate-lr1e-4/model-v1",
+    "tfidf_training_input": "data/processed/week6/google_play_review/google_play_review_train.tsv",
+    "selection_inputs": [
+      "data/processed/week6/google_play_review/google_play_review_validation.tsv",
+      "data/raw/smsa/valid_preprocess.tsv"
+    ],
+    "guard": {
+      "min_accuracy": 0.937,
+      "min_macro_f1": 0.909
+    }
+  },
+  "evaluation_policy": {
+    "igar_read": false,
+    "igar_labels_used": false,
+    "igar_metrics_used": false,
+    "training_or_tuning": true
+  }
+}

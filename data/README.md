@@ -12,6 +12,10 @@ python3 scripts/download_week2_datasets.py --help
 python3 scripts/download_week2_datasets.py
 python3 scripts/download_idsmsa_training.py --help
 python3 scripts/download_idsmsa_training.py
+python3 scripts/download_google_play_review_training.py --help
+python3 scripts/download_google_play_review_training.py
+python3 scripts/prepare_week6_google_play.py --help
+python3 scripts/prepare_week6_google_play.py
 ```
 
 The default output root is this `data/` directory. Use `--output-root` to
@@ -59,6 +63,17 @@ separate, provenance- and license-checked sources.
   `data/raw/idsmsa/IDSMSA.csv`. It is an optional additional training source,
   not a replacement for SmSA. Its source domain is financial-market discourse,
   so evaluation must report it separately from SmSA and IGAR.
+
+* **Indonesian Google Play Review** is a CC BY 4.0 Indonesian app-review
+  source published by Jakarta AI Research on Hugging Face. The raw source has
+  binary `pos`/`neg` labels and a five-point rating. Week 6 derives the
+  three-class AI target from the rating (`1–2=negative`, `3=neutral`,
+  `4–5=positive`), excludes normalized texts with conflicting derived labels,
+  and reports the derivation as weak labeling. The raw training file and its
+  published validation reference are pinned by size and SHA-256 in
+  `data/manifests/week6_training_sources.json`. It is an optional,
+  app-review-domain adaptation source and is never a replacement for the
+  official SmSA benchmark.
 
 See `data/manifests/week2_sources.json` and
 `data/manifests/week6_training_sources.json` for exact URLs, expected hashes

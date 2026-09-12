@@ -47,3 +47,6 @@ artifacts/week3/checkpoint-*/
 artifacts/week6/**/model-v1/
 artifacts/week6/**/checkpoints/
 artifacts/week6/**/checkpoint-*/
+# Week 6 candidate reports and model bundles remain local until a release is approved.
+artifacts/week6/*candidate*/
+artifacts/week6/*weighted*/

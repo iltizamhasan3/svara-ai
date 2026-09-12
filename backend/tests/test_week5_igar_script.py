@@ -61,6 +61,7 @@ def test_run_writes_igar_predictions_metrics_and_errors(tmp_path, monkeypatch):
             "Loaded",
             (),
             {
+                "device": "cpu",
                 "bundle": type(
                     "Bundle",
                     (),
@@ -96,13 +97,19 @@ def test_run_writes_igar_predictions_metrics_and_errors(tmp_path, monkeypatch):
             text_column="content",
             label_column="labelScoreBase",
             batch_size=2,
-            max_length=128,
+            max_length=64,
             torch_threads=1,
         )
     )
 
     assert payload["metrics"]["accuracy"] == pytest.approx(2 / 3)
     assert payload["input"]["evaluated_rows"] == 3
+    assert payload["inference"]["batch_size"] == 2
+    assert payload["inference"]["max_length"] == 64
+    assert payload["inference"]["torch_threads"] == 1
+    assert payload["inference"]["text_column"] == "content"
+    assert payload["inference"]["label_column"] == "labelScoreBase"
+    assert payload["inference"]["runtime_versions"]["python"]
     assert payload["artifacts"]["predictions"] == "igar_predictions.csv"
     assert (output_dir / "igar_predictions.csv").is_file()
     assert (output_dir / "igar_error_analysis.csv").is_file()

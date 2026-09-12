@@ -7,11 +7,13 @@ import argparse
 import csv
 import hashlib
 import json
+import platform
 import sys
 from collections import Counter
 from collections.abc import Sequence
 from pathlib import Path
 from typing import Any
+from importlib.metadata import PackageNotFoundError, version
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "backend"))
@@ -180,6 +182,16 @@ def _artifact_reference(path: Path, *, output_dir: Path) -> str:
     return str(path.resolve().relative_to(output_dir.resolve()))
 
 
+def _runtime_versions() -> dict[str, str]:
+    versions: dict[str, str] = {"python": platform.python_version()}
+    for distribution in ("torch", "transformers", "numpy", "scikit-learn"):
+        try:
+            versions[distribution] = version(distribution)
+        except PackageNotFoundError:
+            versions[distribution] = "unavailable"
+    return versions
+
+
 def run(args: argparse.Namespace) -> dict[str, Any]:
     input_path = args.input.resolve()
     rows = read_csv_rows(input_path)
@@ -253,6 +265,17 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             "revision": bundle.model_revision,
             "preprocessing_version": bundle.preprocessing_version,
             "label_mapping": dict(bundle.label_to_id),
+        },
+        "inference": {
+            "device": inferencer.loaded_model.device,
+            "batch_size": args.batch_size,
+            "max_length": args.max_length,
+            "torch_threads": args.torch_threads,
+            "local_files_only": True,
+            "deterministic_algorithms": True,
+            "text_column": args.text_column,
+            "label_column": args.label_column,
+            "runtime_versions": _runtime_versions(),
         },
         "metrics": metrics,
         "classification_report": classification_report,

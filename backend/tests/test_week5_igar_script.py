@@ -198,3 +198,83 @@ def test_run_applies_trusted_non_igar_decision_bias(tmp_path, monkeypatch):
     }
     assert payload["inference"]["decision_bias_applied"] is True
     assert payload["inference"]["decision_bias_manifest"] == str(calibration_path.resolve())
+
+
+def test_run_blends_tfidf_without_applying_bias_twice(tmp_path, monkeypatch):
+    runner = load_runner()
+    input_path = tmp_path / "sample.csv"
+    input_path.write_text(
+        "content,labelScoreBase\nBagus sekali,Positive\n",
+        encoding="utf-8",
+    )
+    calibration_path = tmp_path / "calibration.json"
+    calibration_path.write_text(
+        json.dumps(
+            {
+                "calibrated": {
+                    "biases": {"positive": 0, "neutral": 0.1, "negative": -0.4}
+                },
+                "evaluation_policy": {"igar_read": False},
+            }
+        ),
+        encoding="utf-8",
+    )
+    captured = {}
+
+    class FakeTfidf:
+        def predict_proba(self, texts):
+            assert texts == ["Bagus sekali"]
+            return [{"positive": 0.1, "neutral": 0.8, "negative": 0.1}]
+
+    class FakeInferencer:
+        loaded_model = type(
+            "Loaded",
+            (),
+            {
+                "device": "cpu",
+                "bundle": type(
+                    "Bundle",
+                    (),
+                    {
+                        "model_version": "sentiment-model-v1",
+                        "model_name": "model",
+                        "model_revision": "revision",
+                        "preprocessing_version": "preprocessing-v1",
+                        "label_to_id": {"positive": 0, "neutral": 1, "negative": 2},
+                    },
+                )(),
+            },
+        )()
+
+        @classmethod
+        def from_pretrained(cls, *args, **kwargs):
+            captured.update(kwargs)
+            return cls()
+
+        def predict_rows(self, rows, *, text_column):
+            return [_prediction(1, "Bagus sekali", "positive")], PreparationReport(1, 1, 0, 0)
+
+    monkeypatch.setattr(runner, "SentimentBatchInferencer", FakeInferencer)
+    monkeypatch.setattr(runner, "load_tfidf_model", lambda model, manifest: FakeTfidf())
+    payload = runner.run(
+        Namespace(
+            input=input_path,
+            model_dir=tmp_path / "model",
+            output_dir=tmp_path / "output",
+            text_column="content",
+            label_column="labelScoreBase",
+            decision_bias_manifest=calibration_path,
+            export_manifest=tmp_path / "export.json",
+            tfidf_model=tmp_path / "tfidf.joblib",
+            tfidf_manifest=tmp_path / "tfidf.json",
+            bert_weight=0.7,
+            batch_size=2,
+            max_length=64,
+            torch_threads=1,
+        )
+    )
+
+    assert captured["decision_bias"] is None
+    assert payload["inference"]["tfidf_used"] is True
+    assert payload["inference"]["bert_weight"] == pytest.approx(0.7)
+    assert payload["external_evaluation"]["tfidf_used"] is True

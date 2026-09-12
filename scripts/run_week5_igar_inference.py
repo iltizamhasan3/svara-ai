@@ -21,6 +21,7 @@ sys.path.insert(0, str(ROOT / "scripts"))
 
 from evaluate_non_igar_tsv import load_decision_bias  # noqa: E402
 
+from app.ai.sentiment_ensemble import blend_prediction, load_tfidf_model  # noqa: E402
 from app.ai.model_bundle import ModelBundleError  # noqa: E402
 from app.ai.preprocessing import (  # noqa: E402
     CANONICAL_LABELS,
@@ -202,6 +203,14 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
     decision_bias_manifest = getattr(args, "decision_bias_manifest", None)
     decision_bias = load_decision_bias(decision_bias_manifest)
     export_manifest = getattr(args, "export_manifest", None)
+    tfidf_model_path = getattr(args, "tfidf_model", None)
+    tfidf_manifest_path = getattr(args, "tfidf_manifest", None)
+    bert_weight = getattr(args, "bert_weight", 0.5)
+    tfidf_model = None
+    if tfidf_model_path is not None or tfidf_manifest_path is not None:
+        if tfidf_model_path is None or tfidf_manifest_path is None:
+            raise ValueError("--tfidf-model and --tfidf-manifest must be provided together")
+        tfidf_model = load_tfidf_model(tfidf_model_path, tfidf_manifest_path)
 
     inferencer = SentimentBatchInferencer.from_pretrained(
         str(args.model_dir.resolve()),
@@ -211,12 +220,23 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         local_files_only=True,
         torch_threads=args.torch_threads,
         export_manifest_path=export_manifest,
-        decision_bias=decision_bias,
+        decision_bias=None if tfidf_model is not None else decision_bias,
     )
     predictions, preparation_report = inferencer.predict_rows(
         rows,
         text_column=args.text_column,
     )
+    if tfidf_model is not None:
+        tfidf_probabilities = tfidf_model.predict_proba([prediction.text for prediction in predictions])
+        predictions = [
+            blend_prediction(
+                prediction,
+                tfidf_values,
+                bert_weight=bert_weight,
+                decision_bias=decision_bias,
+            )
+            for prediction, tfidf_values in zip(predictions, tfidf_probabilities, strict=True)
+        ]
     if not predictions:
         raise ValueError("no non-empty text rows were available for evaluation")
 
@@ -294,6 +314,16 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             "export_manifest": (
                 _relative_path(export_manifest) if export_manifest is not None else None
             ),
+            "tfidf_model": (
+                _relative_path(tfidf_model_path) if tfidf_model_path is not None else None
+            ),
+            "tfidf_manifest": (
+                _relative_path(tfidf_manifest_path)
+                if tfidf_manifest_path is not None
+                else None
+            ),
+            "bert_weight": bert_weight if tfidf_model is not None else None,
+            "tfidf_used": tfidf_model is not None,
         },
         "metrics": metrics,
         "classification_report": classification_report,
@@ -304,6 +334,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         "external_evaluation": {
             "igar_only": True,
             "training_or_tuning": False,
+            "tfidf_used": tfidf_model is not None,
             "caveat": "The tracked IGAR sample is a small external/domain-validation sample and is not representative of all SVARA feedback.",
         },
         "artifacts": {
@@ -360,6 +391,9 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="trusted model export manifest for the selected local bundle",
     )
+    parser.add_argument("--tfidf-model", type=Path, default=None)
+    parser.add_argument("--tfidf-manifest", type=Path, default=None)
+    parser.add_argument("--bert-weight", type=float, default=0.5)
     parser.add_argument("--batch-size", type=int, default=8)
     parser.add_argument("--max-length", type=int, default=128)
     parser.add_argument("--torch-threads", type=int, default=4)

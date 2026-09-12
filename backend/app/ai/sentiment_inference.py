@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
@@ -41,6 +42,7 @@ class SentimentBatchInferencer:
         *,
         batch_size: int = 8,
         max_length: int = 128,
+        decision_bias: Mapping[str, float] | None = None,
     ) -> None:
         if batch_size < 1:
             raise SentimentInferenceError("batch_size must be positive")
@@ -49,6 +51,7 @@ class SentimentBatchInferencer:
         self.loaded_model = loaded_model
         self.batch_size = batch_size
         self.max_length = max_length
+        self.decision_bias = self._validate_decision_bias(decision_bias)
 
     @classmethod
     def from_pretrained(
@@ -61,6 +64,7 @@ class SentimentBatchInferencer:
         local_files_only: bool = True,
         torch_threads: int | None = 4,
         export_manifest_path: Path | str | None = None,
+        decision_bias: Mapping[str, float] | None = None,
     ) -> "SentimentBatchInferencer":
         """Load a local export and construct the batch adapter."""
 
@@ -71,7 +75,48 @@ class SentimentBatchInferencer:
             torch_threads=torch_threads,
             export_manifest_path=export_manifest_path,
         )
-        return cls(loaded_model, batch_size=batch_size, max_length=max_length)
+        return cls(
+            loaded_model,
+            batch_size=batch_size,
+            max_length=max_length,
+            decision_bias=decision_bias,
+        )
+
+    def _validate_decision_bias(
+        self,
+        decision_bias: Mapping[str, float] | None,
+    ) -> dict[str, float] | None:
+        if decision_bias is None:
+            return None
+        if not isinstance(decision_bias, Mapping):
+            raise SentimentInferenceError("decision_bias must be a mapping")
+
+        canonical_labels = set(self.loaded_model.bundle.id_to_label.values())
+        if set(decision_bias) != canonical_labels:
+            raise SentimentInferenceError(
+                "decision_bias labels must exactly match canonical labels: "
+                + ", ".join(sorted(canonical_labels))
+            )
+
+        validated: dict[str, float] = {}
+        for label in canonical_labels:
+            value = decision_bias[label]
+            if isinstance(value, bool):
+                raise SentimentInferenceError(
+                    f"decision_bias for {label!r} must be finite"
+                )
+            try:
+                numeric_value = float(value)
+            except (TypeError, ValueError) as exc:
+                raise SentimentInferenceError(
+                    f"decision_bias for {label!r} must be finite"
+                ) from exc
+            if not math.isfinite(numeric_value):
+                raise SentimentInferenceError(
+                    f"decision_bias for {label!r} must be finite"
+                )
+            validated[label] = numeric_value
+        return validated
 
     def predict_batch(self, texts: Sequence[object]) -> list[SentimentPrediction]:
         """Predict a non-empty sequence while preserving order and duplicates.
@@ -193,7 +238,18 @@ class SentimentBatchInferencer:
             label_by_id[index]: float(values[index])
             for index in sorted(label_by_id)
         }
-        predicted_id = max(range(len(values)), key=values.__getitem__)
+        if self.decision_bias is None:
+            # Keep the existing argmax and its lowest-ID tie handling when no
+            # policy is configured.
+            predicted_id = max(range(len(values)), key=values.__getitem__)
+        else:
+            decision_scores = [
+                math.log(values[index]) + self.decision_bias[label_by_id[index]]
+                if values[index] > 0
+                else float("-inf")
+                for index in range(len(values))
+            ]
+            predicted_id = max(range(len(values)), key=decision_scores.__getitem__)
         try:
             sentiment = label_by_id[predicted_id]
         except KeyError as exc:
@@ -205,6 +261,6 @@ class SentimentBatchInferencer:
             source_row_number=source_row_number,
             text=text,
             sentiment=sentiment,
-            confidence=max(probabilities_by_label.values()),
+            confidence=probabilities_by_label[sentiment],
             probabilities=probability_map,
         )

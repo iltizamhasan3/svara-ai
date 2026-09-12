@@ -12,6 +12,7 @@ import argparse
 import csv
 import hashlib
 import json
+import math
 import sys
 from collections.abc import Sequence
 from pathlib import Path
@@ -63,6 +64,41 @@ def read_labeled_tsv(path: Path):
     return rows, report
 
 
+def load_decision_bias(path: Path | None) -> dict[str, float] | None:
+    """Load a trusted calibration artifact without retuning on this input."""
+
+    if path is None:
+        return None
+    path = path.resolve()
+    assert_not_igar_input_path(path)
+    if not path.is_file():
+        raise FileNotFoundError(path)
+    try:
+        artifact = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise ValueError(f"{path}: decision-bias artifact is not valid JSON") from exc
+    calibrated = artifact.get("calibrated") if isinstance(artifact, dict) else None
+    raw_biases = calibrated.get("biases") if isinstance(calibrated, dict) else None
+    if not isinstance(raw_biases, dict):
+        raise ValueError(f"{path}: decision-bias artifact must contain calibrated.biases")
+    expected = set(CANONICAL_LABELS)
+    if set(raw_biases) != expected:
+        raise ValueError(f"{path}: decision biases must cover exactly {sorted(expected)}")
+    biases: dict[str, float] = {}
+    for label in CANONICAL_LABELS:
+        try:
+            value = float(raw_biases[label])
+        except (TypeError, ValueError) as exc:
+            raise ValueError(f"{path}: decision bias for {label} is not numeric") from exc
+        if not math.isfinite(value):
+            raise ValueError(f"{path}: decision bias for {label} must be finite")
+        biases[label] = value
+    policy = artifact.get("evaluation_policy")
+    if not isinstance(policy, dict) or policy.get("igar_read") is not False:
+        raise ValueError(f"{path}: calibration artifact must prove IGAR was not read")
+    return biases
+
+
 def classification_metrics(expected: Sequence[str], predicted: Sequence[str]) -> dict[str, Any]:
     from sklearn.metrics import (  # noqa: PLC0415
         accuracy_score,
@@ -105,6 +141,7 @@ def classification_metrics(expected: Sequence[str], predicted: Sequence[str]) ->
 def run(args: argparse.Namespace) -> dict[str, Any]:
     input_path = args.input.resolve()
     rows, preparation_report = read_labeled_tsv(input_path)
+    decision_bias = load_decision_bias(args.decision_bias_manifest)
     inferencer = SentimentBatchInferencer.from_pretrained(
         str(args.model_dir.resolve()),
         batch_size=args.batch_size,
@@ -113,6 +150,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         local_files_only=True,
         torch_threads=args.torch_threads,
         export_manifest_path=args.export_manifest,
+        decision_bias=decision_bias,
     )
     predictions = inferencer.predict_prepared_rows(
         [PreparedInferenceRow(row.source_row_number, row.text) for row in rows]
@@ -141,6 +179,12 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             "max_length": args.max_length,
             "torch_threads": args.torch_threads,
             "local_files_only": True,
+            "decision_bias_manifest": (
+                str(args.decision_bias_manifest.resolve())
+                if args.decision_bias_manifest is not None
+                else None
+            ),
+            "decision_bias": decision_bias,
         },
         **classification_metrics(expected, predicted),
         "evaluation_policy": {
@@ -148,6 +192,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             "igar_labels_used": False,
             "igar_metrics_used": False,
             "training_or_tuning": False,
+            "decision_bias_applied": decision_bias is not None,
         },
     }
     if args.output is not None:
@@ -162,6 +207,12 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--input", type=Path, required=True, help="prepared non-IGAR text/label TSV")
     parser.add_argument("--model-dir", type=Path, default=ROOT / "artifacts/week3/model-v1")
     parser.add_argument("--export-manifest", type=Path, default=None)
+    parser.add_argument(
+        "--decision-bias-manifest",
+        type=Path,
+        default=None,
+        help="calibration artifact produced on a separate non-IGAR validation set",
+    )
     parser.add_argument("--output", type=Path, default=None)
     parser.add_argument("--dataset-name", default="non-IGAR holdout")
     parser.add_argument("--batch-size", type=int, default=8)

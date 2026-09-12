@@ -134,3 +134,49 @@ def test_predict_batch_returns_empty_for_empty_sequence():
     inferencer, _, _ = _inferencer()
 
     assert inferencer.predict_batch([]) == []
+
+
+def test_default_decision_matches_raw_argmax_and_confidence():
+    inferencer, _, _ = _inferencer()
+
+    prediction = inferencer.predict_batch(["OTP"])[0]
+
+    assert prediction.sentiment == "negative"
+    assert prediction.confidence == prediction.probabilities.negative
+
+
+def test_decision_bias_can_select_non_maximum_raw_class_without_changing_map():
+    default_inferencer, _, _ = _inferencer()
+    biased_inferencer = SentimentBatchInferencer(
+        default_inferencer.loaded_model,
+        decision_bias={"positive": 5.0, "neutral": 0.0, "negative": 0.0},
+    )
+
+    default_prediction = default_inferencer.predict_batch(["Bagus"])[0]
+    biased_prediction = biased_inferencer.predict_batch(["Bagus"])[0]
+
+    assert default_prediction.sentiment == "neutral"
+    assert biased_prediction.sentiment == "positive"
+    assert biased_prediction.probabilities == default_prediction.probabilities
+    assert biased_prediction.confidence == biased_prediction.probabilities.positive
+    assert biased_prediction.confidence < max(
+        biased_prediction.probabilities.neutral,
+        biased_prediction.probabilities.negative,
+    )
+
+
+@pytest.mark.parametrize(
+    "decision_bias",
+    [
+        {"positive": 0.0, "neutral": 0.0},
+        {"positive": 0.0, "neutral": 0.0, "negative": 0.0, "other": 0.0},
+        {"positive": float("nan"), "neutral": 0.0, "negative": 0.0},
+        {"positive": 0.0, "neutral": float("inf"), "negative": 0.0},
+        {"positive": "not-a-number", "neutral": 0.0, "negative": 0.0},
+    ],
+)
+def test_decision_bias_rejects_malformed_or_non_finite_values(decision_bias):
+    inferencer, _, _ = _inferencer()
+
+    with pytest.raises(SentimentInferenceError, match="decision_bias"):
+        SentimentBatchInferencer(inferencer.loaded_model, decision_bias=decision_bias)

@@ -1,5 +1,6 @@
 import csv
 import importlib.util
+import json
 from pathlib import Path
 
 import pytest
@@ -48,3 +49,44 @@ def test_classification_metrics_reports_canonical_order():
     assert result["labels"] == ["positive", "neutral", "negative"]
     assert result["metrics"]["accuracy"] == pytest.approx(2 / 3)
     assert result["confusion_matrix"] == [[1, 0, 0], [0, 0, 1], [0, 0, 1]]
+
+
+def test_load_decision_bias_requires_non_igar_calibration_artifact(tmp_path):
+    evaluator = load_evaluator()
+    path = tmp_path / "calibration.json"
+    path.write_text(
+        json.dumps(
+            {
+                "calibrated": {
+                    "biases": {"positive": 0, "neutral": 0.5, "negative": -0.5}
+                },
+                "evaluation_policy": {"igar_read": False},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    assert evaluator.load_decision_bias(path) == {
+        "positive": 0.0,
+        "neutral": 0.5,
+        "negative": -0.5,
+    }
+
+    path.write_text(
+        json.dumps(
+            {
+                "calibrated": {"biases": {"positive": 0, "neutral": 0}},
+                "evaluation_policy": {"igar_read": False},
+            }
+        ),
+        encoding="utf-8",
+    )
+    with pytest.raises(ValueError, match="exactly"):
+        evaluator.load_decision_bias(path)
+
+
+def test_load_decision_bias_rejects_igar_path(tmp_path):
+    evaluator = load_evaluator()
+    path = tmp_path / "igar" / "calibration.json"
+    with pytest.raises(ValueError, match="sealed external-test"):
+        evaluator.load_decision_bias(path)

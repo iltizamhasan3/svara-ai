@@ -13,7 +13,8 @@ python3 scripts/download_week2_datasets.py
 ```
 
 The default output root is this `data/` directory. Use `--output-root` to
-place downloads elsewhere and `--igar-sample-size` to change the sample size.
+place the SmSA download elsewhere and `--igar-sample-size` to change the
+sample size.
 The tracked sample was generated with 30 rows (10 per source label); its
 checksum and exact command are recorded in the manifest.
 The downloader uses only Python standard-library modules, writes downloads
@@ -37,7 +38,17 @@ and labels.
 
 IGAR is external/domain validation only. Its government-app review domain is
 not a substitute for the primary SmSA training data and its sample must not be
-presented as representative of all SVARA AI feedback.
+presented as representative of all SVARA AI feedback. If a full IGAR file is
+needed for a realistic external test, place it only at the ignored path
+`data/raw/igar/Rating_labeled.csv` and acquire it with:
+
+```bash
+python3 scripts/download_igar_full.py
+```
+
+The full file must never be used for training, validation selection,
+calibration, thresholding, or augmentation. Training data additions belong in
+separate, provenance- and license-checked sources.
 
 See `data/manifests/week2_sources.json` for exact URLs, expected hashes and
 sizes, schemas, licenses, and provenance caveats.

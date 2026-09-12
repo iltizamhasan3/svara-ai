@@ -73,6 +73,22 @@ def test_freeze_encoder_keeps_only_classifier_head_trainable():
     assert model.parameters_by_name["classifier.weight"].requires_grad is True
 
 
+def test_class_weights_use_training_rows_and_cover_all_labels():
+    runner = load_runner()
+    rows = [
+        runner.PreparedRow(1, "positif 1", "positive"),
+        runner.PreparedRow(2, "positif 2", "positive"),
+        runner.PreparedRow(3, "netral", "neutral"),
+        runner.PreparedRow(4, "negatif", "negative"),
+    ]
+
+    weights = runner.compute_class_weights(rows)
+
+    assert weights == pytest.approx([4 / 6, 4 / 3, 4 / 3])
+    with pytest.raises(ValueError, match="missing"):
+        runner.compute_class_weights(rows[:2])
+
+
 def test_additional_training_manifest_is_loaded_and_merged(tmp_path):
     runner = load_runner()
     extra_dir = tmp_path / "idsmsa"

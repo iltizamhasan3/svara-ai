@@ -16,6 +16,7 @@ import json
 import random
 import re
 import sys
+from collections import Counter
 from pathlib import Path
 from typing import Any, Iterable, Mapping
 
@@ -183,6 +184,17 @@ def configure_trainable_parameters(model: Any, *, freeze_encoder: bool) -> dict[
     return {"trainable": trainable, "frozen": frozen}
 
 
+def compute_class_weights(rows: Iterable[PreparedRow]) -> list[float]:
+    """Compute inverse-frequency weights from the training rows only."""
+
+    counts = Counter(row.label for row in rows)
+    missing = [label for label in CANONICAL_LABELS if counts[label] == 0]
+    if missing:
+        raise ValueError(f"class weighting requires every canonical label; missing {missing}")
+    total = sum(counts.values())
+    return [total / (len(CANONICAL_LABELS) * counts[label]) for label in CANONICAL_LABELS]
+
+
 def assert_disjoint_splits(splits: Mapping[str, Iterable[PreparedRow]]) -> None:
     """Fail closed if normalized text occurs in two prepared splits."""
 
@@ -240,6 +252,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--additional-only",
         action="store_true",
         help="train on additional data only while retaining primary validation/test holdouts",
+    )
+    parser.add_argument(
+        "--class-weighting",
+        action="store_true",
+        help="use inverse-frequency cross-entropy weights computed from training rows",
     )
     parser.add_argument("--output-dir", type=Path, default=ROOT / "artifacts/week3")
     parser.add_argument("--epochs", type=float, default=1.0)
@@ -439,6 +456,7 @@ def train(args: argparse.Namespace) -> dict[str, Any]:
         model,
         freeze_encoder=args.freeze_encoder,
     )
+    class_weights = compute_class_weights(prepared["train"]) if args.class_weighting else None
     encoded: dict[str, Any] = {}
     for split in ("train", "validation", "test"):
         rows = prepared[split]
@@ -475,11 +493,27 @@ def train(args: argparse.Namespace) -> dict[str, Any]:
     if "use_cpu" in ta_params: ta_kwargs["use_cpu"] = True
     elif "no_cuda" in ta_params: ta_kwargs["no_cuda"] = True
     training_args = TrainingArguments(**ta_kwargs)
+    trainer_class = Trainer
+    if class_weights is not None:
+        class WeightedLossTrainer(Trainer):
+            def compute_loss(self, model: Any, inputs: dict[str, Any], return_outputs: bool = False, **kwargs: Any):
+                labels = inputs.pop("labels")
+                outputs = model(**inputs)
+                logits = getattr(outputs, "logits", None)
+                if logits is None and isinstance(outputs, (tuple, list)) and outputs:
+                    logits = outputs[0]
+                if logits is None:
+                    raise ValueError("model output does not contain logits")
+                weights = torch.tensor(class_weights, dtype=torch.float, device=logits.device)
+                loss = torch.nn.CrossEntropyLoss(weight=weights)(logits.view(-1, logits.shape[-1]), labels.view(-1))
+                return (loss, outputs) if return_outputs else loss
+
+        trainer_class = WeightedLossTrainer
     trainer_kwargs: dict[str, Any] = dict(model=model, args=training_args, train_dataset=encoded["train"], eval_dataset=encoded["validation"],
         tokenizer=tokenizer, data_collator=DataCollatorWithPadding(tokenizer), compute_metrics=metrics)
     if "processing_class" in inspect.signature(Trainer).parameters:
         trainer_kwargs["processing_class"] = tokenizer; trainer_kwargs.pop("tokenizer")
-    trainer = Trainer(**trainer_kwargs)
+    trainer = trainer_class(**trainer_kwargs)
     trainer.train()
     validation_evaluation = trainer.evaluate(encoded["validation"])
     metrics_api = {
@@ -540,6 +574,7 @@ def train(args: argparse.Namespace) -> dict[str, Any]:
     experiment = {"model": model_source, "revision": None if args.model_dir is not None else MODEL_REVISION, "preprocessing_version": PREPROCESSING_VERSION,
         "label_mapping": LABEL_TO_ID, "config": {"seed": seed, "max_length": args.max_length, "train_batch_size": args.train_batch_size, "eval_batch_size": args.eval_batch_size, "gradient_accumulation_steps": args.gradient_accumulation_steps, "torch_threads": args.torch_threads, "epochs": args.epochs, "learning_rate": args.learning_rate, "weight_decay": .01, "workers": 0, "use_cpu": True},
         "model_source": {"path": str(args.model_dir.resolve()) if args.model_dir is not None else None, "freeze_encoder": args.freeze_encoder, "parameter_tensors": trainable_parameter_report},
+        "class_weighting": {"enabled": class_weights is not None, "weights": class_weights},
         "training_mode": "additional_only" if args.additional_only else "primary_plus_additional" if additional_manifest is not None else "primary_only",
         "split_manifest_sha256": sha256_file(args.split_manifest.resolve()), "row_counts": {key: len(value) for key, value in prepared.items()},
         "checkpoint_identifier": best_checkpoint,

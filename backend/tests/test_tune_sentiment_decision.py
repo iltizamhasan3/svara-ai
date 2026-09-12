@@ -41,6 +41,54 @@ def test_search_biases_is_deterministic_and_prefers_lower_l1_on_tie():
     assert result["metrics"]["macro_f1"] == pytest.approx(1.0)
 
 
+def test_search_biases_enforces_primary_and_guard_floors():
+    tuner = load_tuner()
+    probabilities = [
+        {"positive": 0.8, "neutral": 0.1, "negative": 0.1},
+        {"positive": 0.1, "neutral": 0.8, "negative": 0.1},
+        {"positive": 0.1, "neutral": 0.1, "negative": 0.8},
+    ]
+    result = tuner.search_biases(
+        probabilities, ["positive", "neutral", "negative"],
+        guard_probabilities=probabilities,
+        guard_expected=["positive", "neutral", "negative"],
+        primary_accuracy_floor=1.0,
+        min_guard_accuracy=1.0,
+        min_guard_macro_f1=1.0,
+        primary_macro_f1_floor=1.0,
+        selection_metric="accuracy",
+        bias_min=-0.1, bias_max=0.1, bias_step=0.1,
+    )
+    assert result["metrics"]["accuracy"] >= 1.0
+    assert result["guard_metrics"]["metrics"]["accuracy"] >= 1.0
+    assert result["guard_metrics"]["metrics"]["macro_f1"] >= 1.0
+
+
+def test_search_biases_raises_when_no_candidate_meets_floor():
+    tuner = load_tuner()
+    probabilities = [{"positive": 0.8, "neutral": 0.1, "negative": 0.1}]
+    with pytest.raises(ValueError, match="no bias candidate satisfies"):
+        tuner.search_biases(
+            probabilities, ["negative"], primary_accuracy_floor=1.0,
+            bias_min=0, bias_max=0, bias_step=1,
+        )
+
+
+def test_search_biases_without_guard_preserves_unconstrained_result():
+    tuner = load_tuner()
+    probabilities = [
+        {"positive": 0.34, "neutral": 0.33, "negative": 0.33},
+        {"positive": 0.33, "neutral": 0.34, "negative": 0.33},
+        {"positive": 0.33, "neutral": 0.33, "negative": 0.34},
+    ]
+    result = tuner.search_biases(
+        probabilities, ["positive", "neutral", "negative"],
+        bias_min=-0.1, bias_max=0.1, bias_step=0.1,
+    )
+    assert result["biases"] == {"positive": 0.0, "neutral": 0.0, "negative": 0.0}
+    assert "guard_metrics" not in result
+
+
 def test_tuner_rejects_igar_path():
     tuner = load_tuner()
     with pytest.raises(ValueError, match="sealed external-test"):

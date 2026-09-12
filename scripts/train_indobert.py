@@ -154,6 +154,32 @@ def merge_additional_training(
     }
 
 
+def configure_trainable_parameters(model: Any, *, freeze_encoder: bool) -> dict[str, int]:
+    """Optionally freeze the encoder so CPU adaptation trains only the head."""
+
+    parameters = list(model.named_parameters())
+    if not freeze_encoder:
+        for _, parameter in parameters:
+            parameter.requires_grad = True
+        return {
+            "trainable": sum(1 for _, parameter in parameters if parameter.requires_grad),
+            "frozen": 0,
+        }
+
+    trainable = 0
+    frozen = 0
+    for name, parameter in parameters:
+        is_head = name.startswith("classifier.") or name.startswith("score.")
+        parameter.requires_grad = is_head
+        if is_head:
+            trainable += 1
+        else:
+            frozen += 1
+    if trainable == 0:
+        raise ValueError("--freeze-encoder could not find a classifier or score head")
+    return {"trainable": trainable, "frozen": frozen}
+
+
 def assert_disjoint_splits(splits: Mapping[str, Iterable[PreparedRow]]) -> None:
     """Fail closed if normalized text occurs in two prepared splits."""
 
@@ -195,6 +221,17 @@ def build_parser() -> argparse.ArgumentParser:
         type=Path,
         default=None,
         help="prepared non-IGAR additional dataset manifest (for Week 6 adaptation)",
+    )
+    parser.add_argument(
+        "--model-dir",
+        type=Path,
+        default=None,
+        help="local checkpoint to adapt; defaults to the pinned IndoBERT base",
+    )
+    parser.add_argument(
+        "--freeze-encoder",
+        action="store_true",
+        help="train only the classifier head to keep CPU adaptation memory practical",
     )
     parser.add_argument("--output-dir", type=Path, default=ROOT / "artifacts/week3")
     parser.add_argument("--epochs", type=float, default=1.0)
@@ -358,9 +395,28 @@ def train(args: argparse.Namespace) -> dict[str, Any]:
     model_dir = output_dir / "model-v1"
     checkpoint_dir = output_dir / "checkpoints"
     output_dir.mkdir(parents=True, exist_ok=True)
-    tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME, revision=MODEL_REVISION)
-    model = AutoModelForSequenceClassification.from_pretrained(MODEL_NAME, revision=MODEL_REVISION, num_labels=3,
-        id2label=ID_TO_LABEL, label2id=LABEL_TO_ID)
+    model_source = str(args.model_dir.resolve()) if args.model_dir is not None else MODEL_NAME
+    model_load_kwargs: dict[str, Any] = {}
+    if args.model_dir is not None:
+        model_load_kwargs["local_files_only"] = True
+    model_revision_kwargs = {"revision": MODEL_REVISION} if args.model_dir is None else {}
+    tokenizer = AutoTokenizer.from_pretrained(
+        model_source,
+        **model_revision_kwargs,
+        **model_load_kwargs,
+    )
+    model = AutoModelForSequenceClassification.from_pretrained(
+        model_source,
+        **model_revision_kwargs,
+        num_labels=3,
+        id2label=ID_TO_LABEL,
+        label2id=LABEL_TO_ID,
+        **model_load_kwargs,
+    )
+    trainable_parameter_report = configure_trainable_parameters(
+        model,
+        freeze_encoder=args.freeze_encoder,
+    )
     encoded: dict[str, Any] = {}
     for split in ("train", "validation", "test"):
         rows = prepared[split]
@@ -459,8 +515,9 @@ def train(args: argparse.Namespace) -> dict[str, Any]:
     }
     checksums["model-v1/*"] = sha256_tree(model_dir)
     best_checkpoint = getattr(trainer.state, "best_model_checkpoint", None)
-    experiment = {"model": MODEL_NAME, "revision": MODEL_REVISION, "preprocessing_version": PREPROCESSING_VERSION,
+    experiment = {"model": model_source, "revision": None if args.model_dir is not None else MODEL_REVISION, "preprocessing_version": PREPROCESSING_VERSION,
         "label_mapping": LABEL_TO_ID, "config": {"seed": seed, "max_length": args.max_length, "train_batch_size": args.train_batch_size, "eval_batch_size": args.eval_batch_size, "gradient_accumulation_steps": args.gradient_accumulation_steps, "torch_threads": args.torch_threads, "epochs": args.epochs, "learning_rate": 2e-5, "weight_decay": .01, "workers": 0, "use_cpu": True},
+        "model_source": {"path": str(args.model_dir.resolve()) if args.model_dir is not None else None, "freeze_encoder": args.freeze_encoder, "parameter_tensors": trainable_parameter_report},
         "split_manifest_sha256": sha256_file(args.split_manifest.resolve()), "row_counts": {key: len(value) for key, value in prepared.items()},
         "checkpoint_identifier": best_checkpoint,
         "input_split_sha256": {split: split_manifest["splits"][split]["sha256"] for split in SPLITS},

@@ -45,6 +45,34 @@ def test_igar_training_path_is_rejected():
         runner.assert_not_igar_training_path(ROOT / "data/raw/igar/Rating_labeled.csv")
 
 
+def test_freeze_encoder_keeps_only_classifier_head_trainable():
+    runner = load_runner()
+
+    class Parameter:
+        def __init__(self):
+            self.requires_grad = True
+
+    class Model:
+        def __init__(self):
+            self.parameters_by_name = {
+                "bert.embeddings.weight": Parameter(),
+                "bert.encoder.weight": Parameter(),
+                "classifier.weight": Parameter(),
+                "classifier.bias": Parameter(),
+            }
+
+        def named_parameters(self):
+            return self.parameters_by_name.items()
+
+    model = Model()
+    assert runner.configure_trainable_parameters(model, freeze_encoder=True) == {
+        "trainable": 2,
+        "frozen": 2,
+    }
+    assert model.parameters_by_name["bert.encoder.weight"].requires_grad is False
+    assert model.parameters_by_name["classifier.weight"].requires_grad is True
+
+
 def test_additional_training_manifest_is_loaded_and_merged(tmp_path):
     runner = load_runner()
     extra_dir = tmp_path / "idsmsa"

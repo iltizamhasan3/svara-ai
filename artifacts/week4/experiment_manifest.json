@@ -8,6 +8,11 @@
     "analysis_units": 55,
     "max_rows": 30
   },
+  "input_parsing": {
+    "text_column": "content",
+    "delimiter": ",",
+    "no_header": false
+  },
   "segmentation": {
     "version": "segmentation-v1",
     "split_clauses": true
@@ -72,9 +77,13 @@
   "artifact_checksums": {
     "artifacts/week4/embeddings.npy": "46b4e9032b14988619e8eac31c78d2d165fa70f5f226d355004f9fab040b7549",
     "artifacts/week4/topic_clusters.json": "31df2885b24094142bc9b13612d66d73c22eb13d05130ea80bdc562daa2a0f08",
-    "artifacts/week4/topic_assignments.csv": "3768efb7f8743c051f422e4c78d7d2991c8a42d40a2882821225273463e3dc89",
+    "artifacts/week4/topic_assignments.csv": "2b96ae4f65121a8710dcabb69e2bc0ddb05810caf1252c367c4f645cc7eca39a",
     "artifacts/week4/topic_metrics.json": "c40a483dc0e5e02e69226ac8419828975a5753fa237fe2672450847f63fdec1a",
     "artifacts/week4/manual_evaluation.csv": "172649a955413334d9c5f186395b699a81ae24f6da998726b034a274468de310"
+  },
+  "manual_review": {
+    "status": "preserved",
+    "overwrite_requires_explicit_flag": true
   },
   "status": "initial_cluster_experiment",
   "quality_note": "Unsupervised topic discovery; manual review is required before production use."

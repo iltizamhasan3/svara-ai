@@ -1,49 +1,49 @@
 source_row_number,unit_index,text,topic_id,topic_probability
 1,1,Lelet....,1,0.48675356
-2,1,Saya sudah vaksin kedua,2,0.91827574
-2,2,sertifikat vaksin saya tidak keluar.,2,1.00000000
-2,3,Saya cek di paspor digital juga tidak ada,2,0.77115750
-3,1,Tidak bisa cek sertivikat,2,0.38055979
-4,1,Tidak sinkron dengan data Real,0,0.21246830
-5,1,"Ulasan sebelumnya dihapus, ga ada solusi dr masalah yg sy alami.",0,0.22625566
-5,2,Mau melengkapi akun saja ga bisa utk masukkan data nik n tgl lahir.,0,0.22554551
-5,3,Pdhl udh vaksin 2x n udh sertifikat ada.,2,1.00000000
-5,4,"Ga bs scan barcode kl ada keperluan urusan2 di kantor, krn data blm lengkap.",0,0.22216723
-5,5,"Udh dicoba lengkapi puluhan kali, bahkan smpe uninstal aplikasi n pasang lagi, tetep saja ga bisa masukkan lengkapi akun utk isi NIK n tgl lahir.",0,0.20324543
+2,1,Saya sudah vaksin kedua,2,0.02534611
+2,2,sertifikat vaksin saya tidak keluar.,2,0.00000000
+2,3,Saya cek di paspor digital juga tidak ada,2,0.05468656
+3,1,Tidak bisa cek sertivikat,2,0.05578673
+4,1,Tidak sinkron dengan data Real,0,0.05321680
+5,1,"Ulasan sebelumnya dihapus, ga ada solusi dr masalah yg sy alami.",0,0.04567760
+5,2,Mau melengkapi akun saja ga bisa utk masukkan data nik n tgl lahir.,0,0.04623900
+5,3,Pdhl udh vaksin 2x n udh sertifikat ada.,2,0.00000000
+5,4,"Ga bs scan barcode kl ada keperluan urusan2 di kantor, krn data blm lengkap.",0,0.04805103
+5,5,"Udh dicoba lengkapi puluhan kali, bahkan smpe uninstal aplikasi n pasang lagi, tetep saja ga bisa masukkan lengkapi akun utk isi NIK n tgl lahir.",0,0.05791822
 5,6,MENYUSAHKAN.,1,0.60739543
 5,7,Payah,1,1.00000000
-6,1,Aplikasi nya bagus,0,0.15533290
-6,2,untuk pemilihan tanggal lahir tidak bisa di ketik custom,0,0.59098750
-7,1,"Aplikasi gak jelas arahanya,manusia koq suruh berlindung dgn aplikasi,sunguh yg buat tdk berkemanusian",0,0.16654102
-8,1,Kenapa ketika edit data nik dan tanggal.lahir sudah beberapa kali dicoba gagal terus mana harus di klik pilhan bulan dan tahun 30 tahun kebelakang lg duh kenapa ga pake cara input manual tgl lahirnya atau ada searching jd ga lama input tgl lahir mana gagal terus pas udah ketemu tgl lahir dan juga kenapa mau download sertifikat di sino ga muncul kalo di browser udah bisa tdnya mau download sertifikat kedua,0,0.24868202
-8,2,"ga jadi"" karna terkendala edit data pribadi gagal terus",0,0.22600070
-9,1,Mau download aplikasinya susah tdk bs trs sampe saat ini,0,0.15544546
-10,1,Pas di tanggal lahir gagal trus,0,1.00000000
+6,1,Aplikasi nya bagus,0,0.08507171
+6,2,untuk pemilihan tanggal lahir tidak bisa di ketik custom,0,0.02002960
+7,1,"Aplikasi gak jelas arahanya,manusia koq suruh berlindung dgn aplikasi,sunguh yg buat tdk berkemanusian",0,0.07780392
+8,1,Kenapa ketika edit data nik dan tanggal.lahir sudah beberapa kali dicoba gagal terus mana harus di klik pilhan bulan dan tahun 30 tahun kebelakang lg duh kenapa ga pake cara input manual tgl lahirnya atau ada searching jd ga lama input tgl lahir mana gagal terus pas udah ketemu tgl lahir dan juga kenapa mau download sertifikat di sino ga muncul kalo di browser udah bisa tdnya mau download sertifikat kedua,0,0.03446919
+8,2,"ga jadi"" karna terkendala edit data pribadi gagal terus",0,0.04590079
+9,1,Mau download aplikasinya susah tdk bs trs sampe saat ini,0,0.08463037
+10,1,Pas di tanggal lahir gagal trus,0,0.00000000
 11,1,Ok,3,1.00000000
-12,1,Sudah buka paspor digital tetep aja gk muncul.,2,0.77502339
-12,2,"Begitu dbuka, disuruh isi kelengkapan data berulang kali.",0,0.20205301
+12,1,Sudah buka paspor digital tetep aja gk muncul.,2,0.05419958
+12,2,"Begitu dbuka, disuruh isi kelengkapan data berulang kali.",0,0.05901336
 12,3,Tetep aja gk muncul.,1,0.45254769
-12,4,Pdahal keterangnya sudah vaksin 2.,2,1.00000000
-12,5,Aplikasi gk sinkron.,0,0.16355892
-12,6,Disuruh email juga tidak ada Respon.,2,0.41131614
-13,1,"kenapa setelah saya instal - data - dan izinkan akses lokasi, tetiba tidak bisa lagi masuk ke dalam aplikasi??",0,0.17030873
+12,4,Pdahal keterangnya sudah vaksin 2.,2,0.00000000
+12,5,Aplikasi gk sinkron.,0,0.07990467
+12,6,Disuruh email juga tidak ada Respon.,2,0.05119237
+13,1,"kenapa setelah saya instal - data - dan izinkan akses lokasi, tetiba tidak bisa lagi masuk ke dalam aplikasi??",0,0.07506721
 14,1,.,1,0.54028645
-14,2,Ini niat input data ga sih?,0,0.20709821
-14,3,Kita uda di vaksin,2,1.00000000
+14,2,Ini niat input data ga sih?,0,0.05626384
+14,3,Kita uda di vaksin,2,0.00000000
 14,4,pas log in ga bisa🙏😌😌,1,0.56735266
-15,1,Gimana sih saya sudah vaksin dua bulan yang lalu sertifikat masih belum keluar juga Pengaduan lewat email sudah saya coba,2,1.00000000
-15,2,"tidak ada tanggapan Lewat tlp sudah juga sama saja Terus saya harus mengadu sama siapa lagi,kecewa banget tau gitu ga usah vaksin sekalian",2,1.00000000
-16,1,Kok sya gk muncul sertifikat'y cuma ada nama aku sma nik aku aja.gmana supaya bsa dapat sertifikat??,2,0.87957935
+15,1,Gimana sih saya sudah vaksin dua bulan yang lalu sertifikat masih belum keluar juga Pengaduan lewat email sudah saya coba,2,0.00000000
+15,2,"tidak ada tanggapan Lewat tlp sudah juga sama saja Terus saya harus mengadu sama siapa lagi,kecewa banget tau gitu ga usah vaksin sekalian",2,0.00000000
+16,1,Kok sya gk muncul sertifikat'y cuma ada nama aku sma nik aku aja.gmana supaya bsa dapat sertifikat??,2,0.03101146
 17,1,Mantafff,1,1.00000000
-18,1,Susah sekali untuk mengedit akun.sudah berkali kali edit akun selalu tdk bisa.saya salah memasukkan tanggal lahir saya..,0,0.26870289
-18,2,"Tolong di perbaiki,dan smpai sekarang susah mengubahnya.",0,0.23526201
+18,1,Susah sekali untuk mengedit akun.sudah berkali kali edit akun selalu tdk bisa.saya salah memasukkan tanggal lahir saya..,0,0.02485223
+18,2,"Tolong di perbaiki,dan smpai sekarang susah mengubahnya.",0,0.04103683
 18,3,Mohon di perhatikan..,1,0.43231314
-19,1,"Saya sdh di vaksin tapi, blm ada sertifikatnxa,gmn caranxa yah?",2,0.87087247
+19,1,"Saya sdh di vaksin tapi, blm ada sertifikatnxa,gmn caranxa yah?",2,0.03934990
 19,2,Mohon petunjuk🙏,1,0.43545428
 20,1,Halo kak .,3,1.00000000
-20,2,Kenapa tanggal lahirnya tidak bisa di isi ya kak .,0,1.00000000
+20,2,Kenapa tanggal lahirnya tidak bisa di isi ya kak .,0,0.00000000
 20,3,Nama dan nik sudah bisa d isi,1,0.47775819
-20,4,tanggal lahir tidak bisa di isi Mohon bantuanya,0,1.00000000
+20,4,tanggal lahir tidak bisa di isi Mohon bantuanya,0,0.00000000
 21,1,Josss,1,0.47214749
 22,1,Jadi lebih waspada sama bahaya covid 19,1,0.44744259
 23,1,Mantap...sangat membantu,3,0.32165219
@@ -51,6 +51,6 @@ source_row_number,unit_index,text,topic_id,topic_probability
 25,1,Mantap,1,0.73268844
 26,1,Ok,3,1.00000000
 27,1,Sangat bermanfaat,3,0.59102646
-28,1,Terima kasih dg vaksin rasanya aman dari covid dan tidak membahayakan bagi orang lain terutama merasa Merdeka bisa bebas bepergian dan ber aktivitas.Dan yg lebih penting lagi ikut mendukung program kesehatan WHO.Meringankan relawan satgas covid dan bisa memulai pembelajaran tatap muka ber wira usaha menunaikan ibadah haji terbukanya pariwisata seportivitas.,2,1.00000000
+28,1,Terima kasih dg vaksin rasanya aman dari covid dan tidak membahayakan bagi orang lain terutama merasa Merdeka bisa bebas bepergian dan ber aktivitas.Dan yg lebih penting lagi ikut mendukung program kesehatan WHO.Meringankan relawan satgas covid dan bisa memulai pembelajaran tatap muka ber wira usaha menunaikan ibadah haji terbukanya pariwisata seportivitas.,2,0.00000000
 29,1,Mantap,1,1.00000000
 30,1,Oke lah,3,0.60771147

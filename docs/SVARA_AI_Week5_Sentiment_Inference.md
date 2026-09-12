@@ -71,6 +71,8 @@ Temuan utama:
 - error terbanyak adalah `neutral → negative` sebanyak 6 row;
 - 10 dari 30 row salah (`error_rate=0.3333`).
 
+`igar_metrics.json` juga menyimpan konfigurasi efektif (`batch_size`, `max_length`, threads, column mapping, deterministic flag) dan versi runtime agar hasil dapat direproduksi. Export manifest adalah trust anchor; exporter menolak overwrite kecuali flag release eksplisit digunakan.
+
 ### Error analysis
 
 | Review bucket | Count |
@@ -88,7 +90,6 @@ Bucket tersebut adalah heuristik triage berbasis teks untuk membantu review manu
 Dari root repository, setelah bundle model tersedia secara lokal:
 
 ```bash
-backend/.venv/bin/python scripts/export_sentiment_model.py
 backend/.venv/bin/python scripts/run_week5_igar_inference.py \
   --batch-size 8 \
   --max-length 128 \

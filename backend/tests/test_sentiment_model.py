@@ -1,5 +1,6 @@
 import importlib.util
 import json
+from argparse import Namespace
 from pathlib import Path
 
 import pytest
@@ -97,3 +98,18 @@ def test_validate_model_bundle_rejects_modified_file_against_trusted_manifest(tm
 
     with pytest.raises(ModelBundleError, match="checksum mismatch"):
         validate_model_bundle(bundle, manifest_path=manifest_path)
+
+
+def test_exporter_requires_explicit_trust_manifest_replacement(tmp_path):
+    bundle = _write_fake_bundle(tmp_path)
+    exporter = _load_exporter()
+    output = tmp_path / "manifest.json"
+    output.write_text("existing trust anchor\n", encoding="utf-8")
+
+    args = Namespace(model_dir=bundle, output=output, replace_trust_manifest=False)
+    with pytest.raises(ValueError, match="replace-trust-manifest"):
+        exporter.main(args)
+
+    args.replace_trust_manifest = True
+    exporter.main(args)
+    assert json.loads(output.read_text(encoding="utf-8"))["manifest_version"] == 1

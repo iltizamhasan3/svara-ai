@@ -92,12 +92,22 @@ def build_parser() -> argparse.ArgumentParser:
         type=Path,
         default=ROOT / "artifacts/week5/sentiment_model_export_manifest.json",
     )
+    parser.add_argument(
+        "--replace-trust-manifest",
+        action="store_true",
+        help="explicitly replace an existing manifest during a deliberate release operation",
+    )
     return parser
 
 
 def main(args: argparse.Namespace) -> dict[str, Any]:
     manifest = build_export_manifest(args.model_dir.resolve(), root=ROOT)
     output = args.output.resolve()
+    if output.exists() and not getattr(args, "replace_trust_manifest", False):
+        raise ValueError(
+            f"{output}: trust manifest already exists; pass --replace-trust-manifest "
+            "only for a deliberate release operation"
+        )
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
     return manifest

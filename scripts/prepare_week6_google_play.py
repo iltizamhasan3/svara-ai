@@ -46,6 +46,7 @@ from prepare_week6_data import (  # noqa: E402
 
 SOURCE_KEY = "google_play_review"
 SCHEMA = ["text", "label", "stars"]
+MISSING_TEXT_VALUES = {"", "na", "n/a", "nan", "none", "null"}
 
 
 def _atomic_write_text(path: Path, content: str) -> None:
@@ -126,7 +127,7 @@ def load_google_play_rows(path: Path, training_manifest_path: Path) -> tuple[lis
         for source_row_number, row in enumerate(reader, start=1):
             input_rows += 1
             text = normalize_text(row.get("text"))
-            if not text:
+            if text.casefold() in MISSING_TEXT_VALUES:
                 missing_text_rows += 1
                 continue
             label = _derived_label(str(row.get("label", "")), str(row.get("stars", "")), row_number=source_row_number)

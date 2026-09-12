@@ -40,6 +40,7 @@ def test_loader_excludes_ambiguous_normalized_texts(tmp_path):
         ["Biasa", "neg", "3"],
         ["campur", "neg", "1"],
         ["campur", "pos", "5"],
+        ["N/A", "pos", "5"],
     ]
     with path.open("w", encoding="utf-8", newline="") as handle:
         writer = csv.writer(handle, lineterminator="\n")
@@ -79,6 +80,7 @@ def test_loader_excludes_ambiguous_normalized_texts(tmp_path):
     assert report["duplicate_rows"] == 2
     assert report["ambiguous_text_groups"] == 1
     assert report["ambiguous_rows_removed"] == 2
+    assert report["missing_text_rows"] == 1
 
 
 def test_google_play_path_is_rejected_as_igar_training_input():

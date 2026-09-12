@@ -17,6 +17,9 @@ from importlib.metadata import PackageNotFoundError, version
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "backend"))
+sys.path.insert(0, str(ROOT / "scripts"))
+
+from evaluate_non_igar_tsv import load_decision_bias  # noqa: E402
 
 from app.ai.model_bundle import ModelBundleError  # noqa: E402
 from app.ai.preprocessing import (  # noqa: E402
@@ -196,6 +199,8 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
     input_path = args.input.resolve()
     rows = read_csv_rows(input_path)
     _validate_columns(rows, text_column=args.text_column, label_column=args.label_column)
+    decision_bias_manifest = getattr(args, "decision_bias_manifest", None)
+    decision_bias = load_decision_bias(decision_bias_manifest)
 
     inferencer = SentimentBatchInferencer.from_pretrained(
         str(args.model_dir.resolve()),
@@ -204,6 +209,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         device="cpu",
         local_files_only=True,
         torch_threads=args.torch_threads,
+        decision_bias=decision_bias,
     )
     predictions, preparation_report = inferencer.predict_rows(
         rows,
@@ -276,6 +282,13 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             "text_column": args.text_column,
             "label_column": args.label_column,
             "runtime_versions": _runtime_versions(),
+            "decision_bias_manifest": (
+                _relative_path(decision_bias_manifest)
+                if decision_bias_manifest is not None
+                else None
+            ),
+            "decision_bias": decision_bias,
+            "decision_bias_applied": decision_bias is not None,
         },
         "metrics": metrics,
         "classification_report": classification_report,
@@ -330,6 +343,12 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--text-column", default="content")
     parser.add_argument("--label-column", default="labelScoreBase")
+    parser.add_argument(
+        "--decision-bias-manifest",
+        type=Path,
+        default=None,
+        help="trusted calibration artifact produced on non-IGAR validation data",
+    )
     parser.add_argument("--batch-size", type=int, default=8)
     parser.add_argument("--max-length", type=int, default=128)
     parser.add_argument("--torch-threads", type=int, default=4)

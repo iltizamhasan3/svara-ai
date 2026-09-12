@@ -125,3 +125,76 @@ def test_read_csv_rows_rejects_empty_input(tmp_path):
 
     with pytest.raises(ValueError, match="at least one data row"):
         runner.read_csv_rows(path)
+
+
+def test_run_applies_trusted_non_igar_decision_bias(tmp_path, monkeypatch):
+    runner = load_runner()
+    input_path = tmp_path / "sample.csv"
+    input_path.write_text(
+        "content,labelScoreBase\nBagus sekali,Positive\n",
+        encoding="utf-8",
+    )
+    calibration_path = tmp_path / "calibration.json"
+    calibration_path.write_text(
+        json.dumps(
+            {
+                "calibrated": {
+                    "biases": {"positive": 0, "neutral": -0.55, "negative": -0.45}
+                },
+                "evaluation_policy": {"igar_read": False},
+            }
+        ),
+        encoding="utf-8",
+    )
+    captured = {}
+
+    class FakeInferencer:
+        loaded_model = type(
+            "Loaded",
+            (),
+            {
+                "device": "cpu",
+                "bundle": type(
+                    "Bundle",
+                    (),
+                    {
+                        "model_version": "sentiment-model-v1",
+                        "model_name": "model",
+                        "model_revision": "revision",
+                        "preprocessing_version": "preprocessing-v1",
+                        "label_to_id": {"positive": 0, "neutral": 1, "negative": 2},
+                    },
+                )(),
+            },
+        )()
+
+        @classmethod
+        def from_pretrained(cls, *args, **kwargs):
+            captured.update(kwargs)
+            return cls()
+
+        def predict_rows(self, rows, *, text_column):
+            return [_prediction(1, "Bagus sekali", "positive")], PreparationReport(1, 1, 0, 0)
+
+    monkeypatch.setattr(runner, "SentimentBatchInferencer", FakeInferencer)
+    payload = runner.run(
+        Namespace(
+            input=input_path,
+            model_dir=tmp_path / "model",
+            output_dir=tmp_path / "output",
+            text_column="content",
+            label_column="labelScoreBase",
+            decision_bias_manifest=calibration_path,
+            batch_size=2,
+            max_length=64,
+            torch_threads=1,
+        )
+    )
+
+    assert captured["decision_bias"] == {
+        "positive": 0.0,
+        "neutral": -0.55,
+        "negative": -0.45,
+    }
+    assert payload["inference"]["decision_bias_applied"] is True
+    assert payload["inference"]["decision_bias_manifest"] == str(calibration_path.resolve())

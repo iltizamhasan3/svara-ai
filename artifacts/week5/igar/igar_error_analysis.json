@@ -1,0 +1,148 @@
+{
+  "dataset": "IGAR",
+  "evaluated_rows": 30,
+  "error_count": 10,
+  "error_rate": 0.3333,
+  "category_counts": {
+    "long_text": 1,
+    "mixed_signal": 3,
+    "other": 2,
+    "question_or_request": 2,
+    "short_text": 2
+  },
+  "confusion_pairs": {
+    "negative->neutral": 2,
+    "neutral->negative": 6,
+    "neutral->positive": 2
+  },
+  "category_definitions": {
+    "mixed_signal": "Text contains a contrastive marker and merits mixed-sentiment review.",
+    "short_text": "Text has three or fewer whitespace-delimited tokens.",
+    "question_or_request": "Text contains a question marker and merits intent review.",
+    "long_text": "Text has at least thirty whitespace-delimited tokens.",
+    "other": "No deterministic triage pattern matched this error."
+  },
+  "errors": [
+    {
+      "source_row_number": 2,
+      "text": "Saya sudah vaksin kedua tapi sertifikat vaksin saya tidak keluar. Saya cek di paspor digital juga tidak ada",
+      "expected_label": "negative",
+      "predicted_label": "neutral",
+      "correct": false,
+      "confidence": 0.697321891784668,
+      "positive_probability": 0.0027693803422152996,
+      "neutral_probability": 0.697321891784668,
+      "negative_probability": 0.29990875720977783,
+      "error_category": "mixed_signal"
+    },
+    {
+      "source_row_number": 3,
+      "text": "Tidak bisa cek sertivikat",
+      "expected_label": "negative",
+      "predicted_label": "neutral",
+      "correct": false,
+      "confidence": 0.8851243257522583,
+      "positive_probability": 0.0018282956443727016,
+      "neutral_probability": 0.8851243257522583,
+      "negative_probability": 0.11304742842912674,
+      "error_category": "other"
+    },
+    {
+      "source_row_number": 11,
+      "text": "Ok",
+      "expected_label": "neutral",
+      "predicted_label": "positive",
+      "correct": false,
+      "confidence": 0.9517139792442322,
+      "positive_probability": 0.9517139792442322,
+      "neutral_probability": 0.0350959450006485,
+      "negative_probability": 0.01319002266973257,
+      "error_category": "short_text"
+    },
+    {
+      "source_row_number": 12,
+      "text": "Sudah buka paspor digital tetep aja gk muncul. Begitu dbuka, disuruh isi kelengkapan data berulang kali. Tetep aja gk muncul. Pdahal keterangnya sudah vaksin 2. Aplikasi gk sinkron. Disuruh email juga tidak ada Respon.",
+      "expected_label": "neutral",
+      "predicted_label": "negative",
+      "correct": false,
+      "confidence": 0.9701725840568542,
+      "positive_probability": 0.003342769341543317,
+      "neutral_probability": 0.026484647765755653,
+      "negative_probability": 0.9701725840568542,
+      "error_category": "long_text"
+    },
+    {
+      "source_row_number": 13,
+      "text": "kenapa setelah saya instal - data - dan izinkan akses lokasi, tetiba tidak bisa lagi masuk ke dalam aplikasi??",
+      "expected_label": "neutral",
+      "predicted_label": "negative",
+      "correct": false,
+      "confidence": 0.9826432466506958,
+      "positive_probability": 0.002295921090990305,
+      "neutral_probability": 0.015060887672007084,
+      "negative_probability": 0.9826432466506958,
+      "error_category": "question_or_request"
+    },
+    {
+      "source_row_number": 14,
+      "text": ". Ini niat input data ga sih? Kita uda di vaksin tapi pas log in ga bisa\ud83d\ude4f\ud83d\ude0c\ud83d\ude0c",
+      "expected_label": "neutral",
+      "predicted_label": "negative",
+      "correct": false,
+      "confidence": 0.5616356730461121,
+      "positive_probability": 0.0036980898585170507,
+      "neutral_probability": 0.4346662759780884,
+      "negative_probability": 0.5616356730461121,
+      "error_category": "mixed_signal"
+    },
+    {
+      "source_row_number": 15,
+      "text": "Gimana sih saya sudah vaksin dua bulan yang lalu sertifikat masih belum keluar juga Pengaduan lewat email sudah saya coba tapi tidak ada tanggapan Lewat tlp sudah juga sama saja Terus saya harus mengadu sama siapa lagi,kecewa banget tau gitu ga usah vaksin sekalian",
+      "expected_label": "neutral",
+      "predicted_label": "negative",
+      "correct": false,
+      "confidence": 0.9952390193939209,
+      "positive_probability": 0.0028550331480801105,
+      "neutral_probability": 0.0019059537444263697,
+      "negative_probability": 0.9952390193939209,
+      "error_category": "mixed_signal"
+    },
+    {
+      "source_row_number": 16,
+      "text": "Kok sya gk muncul sertifikat'y cuma ada nama aku sma nik aku aja.gmana supaya bsa dapat sertifikat??",
+      "expected_label": "neutral",
+      "predicted_label": "negative",
+      "correct": false,
+      "confidence": 0.9526181817054749,
+      "positive_probability": 0.003943011164665222,
+      "neutral_probability": 0.043438784778118134,
+      "negative_probability": 0.9526181817054749,
+      "error_category": "question_or_request"
+    },
+    {
+      "source_row_number": 17,
+      "text": "Mantafff",
+      "expected_label": "neutral",
+      "predicted_label": "positive",
+      "correct": false,
+      "confidence": 0.9937799572944641,
+      "positive_probability": 0.9937799572944641,
+      "neutral_probability": 0.0019676825031638145,
+      "negative_probability": 0.004252439830452204,
+      "error_category": "short_text"
+    },
+    {
+      "source_row_number": 18,
+      "text": "Susah sekali untuk mengedit akun.sudah berkali kali edit akun selalu tdk bisa.saya salah memasukkan tanggal lahir saya.. Tolong di perbaiki,dan smpai sekarang susah mengubahnya. Mohon di perhatikan..",
+      "expected_label": "neutral",
+      "predicted_label": "negative",
+      "correct": false,
+      "confidence": 0.9919047355651855,
+      "positive_probability": 0.005149620585143566,
+      "neutral_probability": 0.0029456072952598333,
+      "negative_probability": 0.9919047355651855,
+      "error_category": "other"
+    }
+  ],
+  "interpretation": "Categories are deterministic review buckets for prioritization; they do not establish why the model made an error."
+}

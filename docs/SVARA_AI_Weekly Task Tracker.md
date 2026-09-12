@@ -202,11 +202,11 @@
 # Minggu 5 — Sentiment End-to-End Integration
 
 ### Project Lead + AI/NLP Engineer
-- [ ] Finalisasi preprocessing sentiment
-- [ ] Export model untuk inference
-- [ ] Membuat fungsi batch inference
-- [ ] Test inference pada data IGAR
-- [ ] Analisis error classification
+- [x] Finalisasi preprocessing sentiment
+- [x] Export model untuk inference
+- [x] Membuat fungsi batch inference
+- [x] Test inference pada data IGAR
+- [x] Analisis error classification
 
 ### Backend + Data Engineer
 - [ ] Integrasi IndoBERT sebenarnya

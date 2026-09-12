@@ -1,0 +1,62 @@
+{
+  "manifest_version": 1,
+  "model_version": "sentiment-model-v1",
+  "model": "indobenchmark/indobert-base-p1",
+  "revision": "c2cd0b51ddce6580eb35263b39b0a1e5fb0a39e2",
+  "preprocessing_version": "preprocessing-v1",
+  "label_mapping": {
+    "positive": 0,
+    "neutral": 1,
+    "negative": 2
+  },
+  "inference": {
+    "device": "cpu",
+    "local_files_only": true,
+    "required_files": [
+      "config.json",
+      "model.safetensors",
+      "tokenizer.json",
+      "tokenizer_config.json",
+      "special_tokens_map.json",
+      "vocab.txt"
+    ]
+  },
+  "bundle": {
+    "path": "artifacts/week3/model-v1",
+    "files": {
+      "config.json": {
+        "size_bytes": 1038,
+        "sha256": "d12c694e9280e80711e0d8e587b3d8005a50b27a9f8fc530848e51fd1141f182"
+      },
+      "model.safetensors": {
+        "size_bytes": 497798148,
+        "sha256": "53b9dd14eb3406114c9eb47d12f3c7a49e035cb3c46ead00d0023a8a8657fbc1"
+      },
+      "tokenizer.json": {
+        "size_bytes": 709125,
+        "sha256": "f11fab6108ebecf8d5fdb511f0c736ed110495c26a3ebf0badccbdb32460e0e3"
+      },
+      "tokenizer_config.json": {
+        "size_bytes": 1292,
+        "sha256": "0088a6f8bcdd4014184fb068b83ebb12896a9db2bb269a71f73de83fef24bceb"
+      },
+      "special_tokens_map.json": {
+        "size_bytes": 125,
+        "sha256": "b6d346be366a7d1d48332dbc9fdf3bf8960b5d879522b7799ddba59e76237ee3"
+      },
+      "vocab.txt": {
+        "size_bytes": 229167,
+        "sha256": "35cfc7be6dc3ec71102248722f352830a8fd89b5a5dadb83d70c2f7794ddbc11"
+      }
+    }
+  },
+  "release": {
+    "tag": "ai-model-v1.0.0",
+    "url": "https://github.com/iltizamhasan3/svara-ai/releases/tag/ai-model-v1.0.0",
+    "asset": "svara-ai-sentiment-model-v1.tar.gz"
+  },
+  "external_evaluation": {
+    "igar_only": true,
+    "training_or_tuning": false
+  }
+}

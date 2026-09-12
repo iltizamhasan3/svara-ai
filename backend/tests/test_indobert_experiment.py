@@ -130,6 +130,7 @@ def test_additional_only_requires_an_additional_manifest():
     args = runner.build_parser().parse_args(["--additional-only"])
 
     assert args.additional_only is True
+    assert args.learning_rate == pytest.approx(2e-5)
 
 
 def _fixture_manifest(tmp_path: Path, runner, *, checksum_override=_UNSET):

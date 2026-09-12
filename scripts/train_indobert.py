@@ -240,6 +240,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--output-dir", type=Path, default=ROOT / "artifacts/week3")
     parser.add_argument("--epochs", type=float, default=1.0)
+    parser.add_argument("--learning-rate", type=float, default=2e-5)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--max-length", type=int, default=128)
     parser.add_argument("--train-batch-size", type=int, default=4)
@@ -397,6 +398,8 @@ def train(args: argparse.Namespace) -> dict[str, Any]:
         torch.set_num_interop_threads(min(args.torch_threads, 4))
     if args.epochs <= 0:
         raise ValueError("--epochs must be positive")
+    if args.learning_rate <= 0:
+        raise ValueError("--learning-rate must be positive")
     if args.max_length < 8:
         raise ValueError("--max-length must be at least 8")
     if args.train_batch_size < 1 or args.eval_batch_size < 1:
@@ -457,7 +460,7 @@ def train(args: argparse.Namespace) -> dict[str, Any]:
         precision, recall, f1, _ = precision_recall_fscore_support(labels, predicted, labels=list(range(3)), average="macro", zero_division=0)
         return {"accuracy": float(accuracy_score(labels, predicted)), "precision": float(precision), "recall": float(recall), "macro_f1": float(f1)}
 
-    ta_kwargs: dict[str, Any] = dict(output_dir=str(checkpoint_dir), num_train_epochs=args.epochs, learning_rate=2e-5, weight_decay=.01,
+    ta_kwargs: dict[str, Any] = dict(output_dir=str(checkpoint_dir), num_train_epochs=args.epochs, learning_rate=args.learning_rate, weight_decay=.01,
         per_device_train_batch_size=args.train_batch_size, per_device_eval_batch_size=args.eval_batch_size,
         gradient_accumulation_steps=args.gradient_accumulation_steps, dataloader_num_workers=0,
         seed=seed, report_to=[], logging_strategy="steps", eval_accumulation_steps=1, save_total_limit=1,
@@ -532,7 +535,7 @@ def train(args: argparse.Namespace) -> dict[str, Any]:
     checksums["model-v1/*"] = sha256_tree(model_dir)
     best_checkpoint = getattr(trainer.state, "best_model_checkpoint", None)
     experiment = {"model": model_source, "revision": None if args.model_dir is not None else MODEL_REVISION, "preprocessing_version": PREPROCESSING_VERSION,
-        "label_mapping": LABEL_TO_ID, "config": {"seed": seed, "max_length": args.max_length, "train_batch_size": args.train_batch_size, "eval_batch_size": args.eval_batch_size, "gradient_accumulation_steps": args.gradient_accumulation_steps, "torch_threads": args.torch_threads, "epochs": args.epochs, "learning_rate": 2e-5, "weight_decay": .01, "workers": 0, "use_cpu": True},
+        "label_mapping": LABEL_TO_ID, "config": {"seed": seed, "max_length": args.max_length, "train_batch_size": args.train_batch_size, "eval_batch_size": args.eval_batch_size, "gradient_accumulation_steps": args.gradient_accumulation_steps, "torch_threads": args.torch_threads, "epochs": args.epochs, "learning_rate": args.learning_rate, "weight_decay": .01, "workers": 0, "use_cpu": True},
         "model_source": {"path": str(args.model_dir.resolve()) if args.model_dir is not None else None, "freeze_encoder": args.freeze_encoder, "parameter_tensors": trainable_parameter_report},
         "training_mode": "additional_only" if args.additional_only else "primary_plus_additional" if additional_manifest is not None else "primary_only",
         "split_manifest_sha256": sha256_file(args.split_manifest.resolve()), "row_counts": {key: len(value) for key, value in prepared.items()},

@@ -201,6 +201,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
     _validate_columns(rows, text_column=args.text_column, label_column=args.label_column)
     decision_bias_manifest = getattr(args, "decision_bias_manifest", None)
     decision_bias = load_decision_bias(decision_bias_manifest)
+    export_manifest = getattr(args, "export_manifest", None)
 
     inferencer = SentimentBatchInferencer.from_pretrained(
         str(args.model_dir.resolve()),
@@ -209,6 +210,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         device="cpu",
         local_files_only=True,
         torch_threads=args.torch_threads,
+        export_manifest_path=export_manifest,
         decision_bias=decision_bias,
     )
     predictions, preparation_report = inferencer.predict_rows(
@@ -289,6 +291,9 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             ),
             "decision_bias": decision_bias,
             "decision_bias_applied": decision_bias is not None,
+            "export_manifest": (
+                _relative_path(export_manifest) if export_manifest is not None else None
+            ),
         },
         "metrics": metrics,
         "classification_report": classification_report,
@@ -348,6 +353,12 @@ def build_parser() -> argparse.ArgumentParser:
         type=Path,
         default=None,
         help="trusted calibration artifact produced on non-IGAR validation data",
+    )
+    parser.add_argument(
+        "--export-manifest",
+        type=Path,
+        default=None,
+        help="trusted model export manifest for the selected local bundle",
     )
     parser.add_argument("--batch-size", type=int, default=8)
     parser.add_argument("--max-length", type=int, default=128)

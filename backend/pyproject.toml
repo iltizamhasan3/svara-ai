@@ -32,9 +32,13 @@ ai = [
   "matplotlib>=3.9,<4.0",
   "numpy>=2.0,<3.0",
   "pandas>=2.2,<3.0",
-  "scikit-learn>=1.5,<2.0",
+  "scikit-learn>=1.6,<2.0",
+  "sentence-transformers==5.2.3",
   "torch>=2.4,<3.0",
   "transformers>=4.45,<5.0",
+  "bertopic==0.17.4",
+  "umap-learn==0.5.12",
+  "hdbscan==0.8.44",
 ]
 
 [tool.setuptools.packages.find]

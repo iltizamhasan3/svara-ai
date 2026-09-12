@@ -36,6 +36,7 @@ supabase/.temp/
 
 # Dataset payloads are reproducible downloads; only the small, reviewed sample is tracked.
 data/raw/
+data/processed/
 data/**/*.part
 data/**/*.tmp
 

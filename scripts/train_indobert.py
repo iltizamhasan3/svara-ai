@@ -85,8 +85,11 @@ def load_additional_splits(manifest_path: Path) -> tuple[dict[str, list[Prepared
 
     manifest_path = manifest_path.resolve()
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-    if manifest.get("dataset") != "ID-SMSA":
-        raise ValueError("additional split manifest must describe ID-SMSA")
+    dataset = manifest.get("dataset")
+    if not isinstance(dataset, str) or not dataset.strip():
+        raise ValueError("additional split manifest must name a non-IGAR dataset")
+    if dataset.casefold() == "igar" or str(manifest.get("source_key", "")).casefold() == "igar":
+        raise ValueError("IGAR is sealed external-test data and cannot be an additional training source")
     policy = manifest.get("training_policy")
     if not isinstance(policy, Mapping) or policy.get("igar_forbidden") is not True:
         raise ValueError("additional split manifest must explicitly forbid IGAR")
@@ -544,7 +547,8 @@ def train(args: argparse.Namespace) -> dict[str, Any]:
         "artifact_paths": artifact_paths, "artifact_checksums": checksums, "test_evaluation": {"enabled": evaluate_test, "status": "evaluated" if evaluate_test else "not_evaluated"},
         "additional_training": {
             "enabled": additional_manifest is not None,
-            "dataset": "ID-SMSA" if additional_manifest is not None else None,
+            "dataset": additional_manifest.get("dataset") if additional_manifest is not None else None,
+            "source_key": additional_manifest.get("source_key") if additional_manifest is not None else None,
             "manifest_sha256": sha256_file(args.additional_split_manifest.resolve()) if additional_manifest is not None else None,
             "report": additional_report,
             "validation_evaluated": additional_validation_artifacts is not None,

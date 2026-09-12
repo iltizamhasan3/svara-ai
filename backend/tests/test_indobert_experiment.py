@@ -125,6 +125,48 @@ def test_additional_training_manifest_is_loaded_and_merged(tmp_path):
     assert [row.text for row in primary["train"]] == ["primary", "tambahan positif"]
 
 
+def test_additional_training_loader_accepts_named_non_igar_source(tmp_path):
+    runner = load_runner()
+    extra_dir = tmp_path / "google-play-review"
+    extra_dir.mkdir()
+    contents = {
+        "google_play_review_train.tsv": "ulasan positif\tpositive\n",
+        "google_play_review_validation.tsv": "ulasan netral\tneutral\n",
+        "google_play_review_test.tsv": "ulasan negatif\tnegative\n",
+    }
+    split_details = {}
+    for filename, content in contents.items():
+        path = extra_dir / filename
+        path.write_text(content, encoding="utf-8")
+        split = filename.removeprefix("google_play_review_").removesuffix(".tsv")
+        split_details[split] = {
+            "file": filename,
+            "sha256": runner.sha256_file(path),
+            "rows": 1,
+        }
+    manifest_path = extra_dir / "google_play_review_split_manifest.json"
+    manifest_path.write_text(
+        json.dumps(
+            {
+                "dataset": "Indonesian Google Play Review",
+                "source_key": "google_play_review",
+                "training_policy": {
+                    "igar_forbidden": True,
+                    "igar_labels_used": False,
+                    "igar_metrics_used": False,
+                },
+                "splits": split_details,
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    additional, manifest = runner.load_additional_splits(manifest_path)
+
+    assert [row.label for row in additional["validation"]] == ["neutral"]
+    assert manifest["source_key"] == "google_play_review"
+
+
 def test_additional_only_requires_an_additional_manifest():
     runner = load_runner()
     args = runner.build_parser().parse_args(["--additional-only"])

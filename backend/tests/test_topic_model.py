@@ -89,6 +89,18 @@ def test_three_documents_are_safe_for_umap_boundary():
     assert result.warnings == ("insufficient_documents",)
 
 
+def test_four_documents_are_safe_with_default_hdbscan_settings():
+    result = fit_topic_model(
+        ["satu alpha", "dua alpha", "tiga beta", "empat beta"],
+        np.asarray(
+            [[1.0, 0.0], [0.9, 0.1], [0.0, 1.0], [0.1, 0.9]],
+            dtype=np.float32,
+        ),
+    )
+
+    assert len(result.topic_ids) == 4
+
+
 def test_short_vocabulary_does_not_emit_blank_keywords():
     texts = ["alpha", "alpha", "alpha", "beta", "beta", "beta"]
     embeddings = np.asarray(

@@ -100,6 +100,10 @@ def _effective_umap_components(config: TopicModelConfig, document_count: int) ->
     return min(config.umap_n_components, max(2, document_count - 2))
 
 
+def _effective_hdbscan_min_samples(config: TopicModelConfig, document_count: int) -> int:
+    return min(config.hdbscan_min_samples, document_count)
+
+
 def _build_bertopic(config: TopicModelConfig, document_count: int) -> Any:
     from bertopic import BERTopic
     from bertopic.vectorizers import ClassTfidfTransformer
@@ -116,7 +120,7 @@ def _build_bertopic(config: TopicModelConfig, document_count: int) -> Any:
     )
     hdbscan_model = HDBSCAN(
         min_cluster_size=config.hdbscan_min_cluster_size,
-        min_samples=config.hdbscan_min_samples,
+        min_samples=_effective_hdbscan_min_samples(config, document_count),
         metric=config.hdbscan_metric,
         prediction_data=True,
     )

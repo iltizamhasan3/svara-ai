@@ -3,7 +3,7 @@
   "training_policy": {
     "igar_forbidden": true,
     "igar_role": "sealed_external_test_only",
-    "allowed_training_sources": ["SmSA", "ID-SMSA"]
+    "allowed_training_sources": ["SmSA", "ID-SMSA", "Indonesian Google Play Review"]
   },
   "sources": {
     "idsmsa": {
@@ -30,6 +30,39 @@
       "expected_sha256": "46f817c3442538036ef2b35a1e962f1395459cb9336686d4aac0298befb29fa4",
       "role": "additional_training",
       "citation": "Hartanto, Liundi, Sutoyo, and Andangsari (2025), Data in Brief 60, 111571, DOI 10.1016/j.dib.2025.111571."
+    },
+    "google_play_review": {
+      "dataset": "Indonesian Google Play Review",
+      "repository": "https://huggingface.co/datasets/jakartaresearch/google-play-review",
+      "license": "CC BY 4.0",
+      "schema": ["text", "label", "stars"],
+      "raw_labels": ["neg", "pos"],
+      "files": [
+        {
+          "name": "train.csv",
+          "url": "https://media.githubusercontent.com/media/jakartaresearch/hf-datasets/main/google-play-review/google-play-review/train.csv",
+          "role": "additional_training_source",
+          "expected_rows": 7028,
+          "expected_size_bytes": 455952,
+          "expected_sha256": "640c1096168259bea951919369011827aeee0b873d386dd62d5c52c62c9c34f5"
+        },
+        {
+          "name": "validation.csv",
+          "url": "https://media.githubusercontent.com/media/jakartaresearch/hf-datasets/main/google-play-review/google-play-review/validation.csv",
+          "role": "source_holdout_reference",
+          "expected_rows": 3012,
+          "expected_size_bytes": 206369,
+          "expected_sha256": "a6f7a94d76dc2375496e64b3cd1fc0e6d857c137984bcf8de321446d8d482a68"
+        }
+      ],
+      "derived_label_rule": {
+        "negative_stars": [1, 2],
+        "neutral_stars": [3],
+        "positive_stars": [4, 5],
+        "note": "The published source label is binary; the three-class training label is derived from the published star rating. Ambiguous normalized texts are excluded."
+      },
+      "role": "additional_training",
+      "citation": "Jakarta AI Research, Indonesian Google Play Review dataset, Hugging Face repository."
     }
   }
 }

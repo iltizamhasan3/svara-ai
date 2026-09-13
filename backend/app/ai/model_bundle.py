@@ -13,6 +13,10 @@ from app.ai.preprocessing import CANONICAL_LABELS, PREPROCESSING_VERSION
 
 
 SENTIMENT_MODEL_VERSION = "sentiment-model-v1"
+SENTIMENT_MODEL_V2_VERSION = "sentiment-model-v2"
+SUPPORTED_MODEL_VERSIONS = frozenset(
+    {SENTIMENT_MODEL_VERSION, SENTIMENT_MODEL_V2_VERSION}
+)
 MODEL_NAME = "indobenchmark/indobert-base-p1"
 MODEL_REVISION = "c2cd0b51ddce6580eb35263b39b0a1e5fb0a39e2"
 LABEL_TO_ID = {label: index for index, label in enumerate(CANONICAL_LABELS)}
@@ -22,6 +26,11 @@ MODEL_RELEASE_URL = (
     "https://github.com/iltizamhasan3/svara-ai/releases/tag/ai-model-v1.0.0"
 )
 MODEL_RELEASE_ASSET = "svara-ai-sentiment-model-v1.tar.gz"
+MODEL_V2_RELEASE_TAG = "ai-model-v2.0.0"
+MODEL_V2_RELEASE_URL = (
+    "https://github.com/iltizamhasan3/svara-ai/releases/tag/ai-model-v2.0.0"
+)
+MODEL_V2_RELEASE_ASSET = "svara-ai-sentiment-model-v2.tar.gz"
 DEFAULT_EXPORT_MANIFEST = (
     Path(__file__).resolve().parents[3]
     / "artifacts/week5/sentiment_model_export_manifest.json"
@@ -96,7 +105,12 @@ def _config_label_mapping(config: Mapping[str, Any]) -> tuple[dict[str, int], di
     return label_to_id, id_to_label
 
 
-def _verify_export_manifest(bundle_path: Path, manifest_path: Path) -> None:
+def _verify_export_manifest(
+    bundle_path: Path,
+    manifest_path: Path,
+    *,
+    expected_model_version: str = SENTIMENT_MODEL_VERSION,
+) -> str:
     """Verify bundle identity and bytes against a trusted export manifest."""
 
     if not manifest_path.is_file():
@@ -108,8 +122,17 @@ def _verify_export_manifest(bundle_path: Path, manifest_path: Path) -> None:
     if not isinstance(manifest, Mapping):
         raise ModelBundleError("trusted export manifest must contain a JSON object")
 
+    manifest_model_version = manifest.get("model_version")
+    if not isinstance(manifest_model_version, str):
+        raise ModelBundleError(
+            "trusted export manifest 'model_version' must be a string"
+        )
+    if manifest_model_version != expected_model_version:
+        raise ModelBundleError(
+            "trusted export manifest 'model_version' does not match the expected sentiment model version"
+        )
+
     expected_identity = {
-        "model_version": SENTIMENT_MODEL_VERSION,
         "model": MODEL_NAME,
         "revision": MODEL_REVISION,
         "preprocessing_version": PREPROCESSING_VERSION,
@@ -143,6 +166,7 @@ def _verify_export_manifest(bundle_path: Path, manifest_path: Path) -> None:
             raise ModelBundleError(
                 f"model bundle checksum mismatch for {filename}; trusted export does not match"
             )
+    return str(manifest_model_version)
 
 
 def validate_model_bundle(
@@ -187,11 +211,39 @@ def validate_model_bundle(
             if manifest_path is not None
             else DEFAULT_EXPORT_MANIFEST
         )
-        _verify_export_manifest(path, trusted_manifest)
+        # An explicit manifest may opt into a supported release version. The
+        # default trust anchor remains v1 for backwards compatibility.
+        try:
+            manifest_data = json.loads(trusted_manifest.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            raise ModelBundleError(
+                f"could not read trusted export manifest: {trusted_manifest}"
+            ) from exc
+        if not isinstance(manifest_data, Mapping):
+            raise ModelBundleError("trusted export manifest must contain a JSON object")
+        manifest_model_version = manifest_data.get("model_version")
+        if not isinstance(manifest_model_version, str):
+            raise ModelBundleError(
+                "trusted export manifest 'model_version' must be a string"
+            )
+        allowed_versions = {SENTIMENT_MODEL_VERSION}
+        if manifest_path is not None:
+            allowed_versions = set(SUPPORTED_MODEL_VERSIONS)
+        if manifest_model_version not in allowed_versions:
+            raise ModelBundleError(
+                "trusted export manifest has an unsupported sentiment model version"
+            )
+        manifest_model_version = _verify_export_manifest(
+            path,
+            trusted_manifest,
+            expected_model_version=manifest_model_version,
+        )
+    else:
+        manifest_model_version = SENTIMENT_MODEL_VERSION
 
     return SentimentModelBundle(
         path=path,
-        model_version=SENTIMENT_MODEL_VERSION,
+        model_version=manifest_model_version,
         model_name=MODEL_NAME,
         model_revision=MODEL_REVISION,
         preprocessing_version=PREPROCESSING_VERSION,

@@ -18,9 +18,14 @@ from app.ai.model_bundle import (  # noqa: E402
     MODEL_RELEASE_ASSET,
     MODEL_RELEASE_TAG,
     MODEL_RELEASE_URL,
+    MODEL_V2_RELEASE_ASSET,
+    MODEL_V2_RELEASE_TAG,
+    MODEL_V2_RELEASE_URL,
     MODEL_REVISION,
     REQUIRED_INFERENCE_FILES,
     SENTIMENT_MODEL_VERSION,
+    SENTIMENT_MODEL_V2_VERSION,
+    SUPPORTED_MODEL_VERSIONS,
     validate_model_bundle,
 )
 
@@ -40,9 +45,32 @@ def _display_path(path: Path, *, root: Path) -> str:
         return str(path.resolve())
 
 
-def build_export_manifest(model_dir: Path, *, root: Path = ROOT) -> dict[str, Any]:
+def _release_defaults(model_version: str) -> tuple[str, str, str]:
+    if model_version == SENTIMENT_MODEL_VERSION:
+        return MODEL_RELEASE_TAG, MODEL_RELEASE_URL, MODEL_RELEASE_ASSET
+    if model_version == SENTIMENT_MODEL_V2_VERSION:
+        return MODEL_V2_RELEASE_TAG, MODEL_V2_RELEASE_URL, MODEL_V2_RELEASE_ASSET
+    raise ValueError(
+        "model_version must be one of: "
+        + ", ".join(sorted(SUPPORTED_MODEL_VERSIONS))
+    )
+
+
+def build_export_manifest(
+    model_dir: Path,
+    *,
+    root: Path = ROOT,
+    model_version: str = SENTIMENT_MODEL_VERSION,
+    release_tag: str | None = None,
+    release_url: str | None = None,
+    release_asset: str | None = None,
+) -> dict[str, Any]:
     """Return portable metadata and checksums for a validated model bundle."""
 
+    default_tag, default_url, default_asset = _release_defaults(model_version)
+    release_tag = default_tag if release_tag is None else release_tag
+    release_url = default_url if release_url is None else release_url
+    release_asset = default_asset if release_asset is None else release_asset
     bundle = validate_model_bundle(model_dir, verify_export_manifest=False)
     files = {
         filename: {
@@ -53,7 +81,7 @@ def build_export_manifest(model_dir: Path, *, root: Path = ROOT) -> dict[str, An
     }
     return {
         "manifest_version": 1,
-        "model_version": SENTIMENT_MODEL_VERSION,
+        "model_version": model_version,
         "model": MODEL_NAME,
         "revision": MODEL_REVISION,
         "preprocessing_version": bundle.preprocessing_version,
@@ -68,9 +96,9 @@ def build_export_manifest(model_dir: Path, *, root: Path = ROOT) -> dict[str, An
             "files": files,
         },
         "release": {
-            "tag": MODEL_RELEASE_TAG,
-            "url": MODEL_RELEASE_URL,
-            "asset": MODEL_RELEASE_ASSET,
+            "tag": release_tag,
+            "url": release_url,
+            "asset": release_asset,
         },
         "external_evaluation": {
             "igar_only": True,
@@ -97,11 +125,22 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="explicitly replace an existing manifest during a deliberate release operation",
     )
+    parser.add_argument("--model-version", default=SENTIMENT_MODEL_VERSION)
+    parser.add_argument("--release-tag", default=None)
+    parser.add_argument("--release-url", default=None)
+    parser.add_argument("--release-asset", default=None)
     return parser
 
 
 def main(args: argparse.Namespace) -> dict[str, Any]:
-    manifest = build_export_manifest(args.model_dir.resolve(), root=ROOT)
+    manifest = build_export_manifest(
+        args.model_dir.resolve(),
+        root=ROOT,
+        model_version=getattr(args, "model_version", SENTIMENT_MODEL_VERSION),
+        release_tag=getattr(args, "release_tag", None),
+        release_url=getattr(args, "release_url", None),
+        release_asset=getattr(args, "release_asset", None),
+    )
     output = args.output.resolve()
     if output.exists() and not getattr(args, "replace_trust_manifest", False):
         raise ValueError(

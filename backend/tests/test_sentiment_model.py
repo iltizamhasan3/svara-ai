@@ -4,6 +4,7 @@ from argparse import Namespace
 from pathlib import Path
 
 import pytest
+import app.ai.model_bundle as model_bundle
 
 from app.ai.model_bundle import (
     ID_TO_LABEL,
@@ -95,6 +96,153 @@ def test_validate_model_bundle_rejects_modified_file_against_trusted_manifest(tm
 
     validate_model_bundle(bundle, manifest_path=manifest_path)
     (bundle / "model.safetensors").write_bytes(b"replacement")
+
+    with pytest.raises(ModelBundleError, match="checksum mismatch"):
+        validate_model_bundle(bundle, manifest_path=manifest_path)
+
+
+def test_validate_model_bundle_accepts_explicit_v2_manifest(tmp_path):
+    bundle = _write_fake_bundle(tmp_path)
+    exporter = _load_exporter()
+    manifest_path = tmp_path / "manifest-v2.json"
+    manifest_path.write_text(
+        json.dumps(
+            exporter.build_export_manifest(
+                bundle,
+                root=tmp_path,
+                model_version=model_bundle.SENTIMENT_MODEL_V2_VERSION,
+                release_tag="ai-model-v2.0.0",
+                release_url="https://example.test/releases/ai-model-v2.0.0",
+                release_asset="svara-ai-sentiment-model-v2.tar.gz",
+            )
+        ),
+        encoding="utf-8",
+    )
+
+    validated = validate_model_bundle(bundle, manifest_path=manifest_path)
+
+    assert validated.model_version == "sentiment-model-v2"
+
+
+def test_export_manifest_keeps_v1_defaults_and_accepts_release_overrides(tmp_path):
+    bundle = _write_fake_bundle(tmp_path)
+    exporter = _load_exporter()
+
+    defaults = exporter.build_export_manifest(bundle, root=tmp_path)
+    custom = exporter.build_export_manifest(
+        bundle,
+        root=tmp_path,
+        model_version=model_bundle.SENTIMENT_MODEL_V2_VERSION,
+        release_tag="v2",
+        release_url="https://example.test/v2",
+        release_asset="model-v2.tar.gz",
+    )
+
+    assert defaults["model_version"] == "sentiment-model-v1"
+    assert defaults["release"]["tag"] == exporter.MODEL_RELEASE_TAG
+    assert custom["model_version"] == "sentiment-model-v2"
+    assert custom["release"] == {
+        "tag": "v2",
+        "url": "https://example.test/v2",
+        "asset": "model-v2.tar.gz",
+    }
+
+    v2_defaults = exporter.build_export_manifest(
+        bundle,
+        root=tmp_path,
+        model_version=model_bundle.SENTIMENT_MODEL_V2_VERSION,
+    )
+    assert v2_defaults["release"] == {
+        "tag": exporter.MODEL_V2_RELEASE_TAG,
+        "url": exporter.MODEL_V2_RELEASE_URL,
+        "asset": exporter.MODEL_V2_RELEASE_ASSET,
+    }
+
+
+def test_exporter_model_version_only_override_uses_matching_release_defaults(tmp_path):
+    bundle = _write_fake_bundle(tmp_path)
+    exporter = _load_exporter()
+    output = tmp_path / "manifest-v2.json"
+
+    manifest = exporter.main(
+        Namespace(
+            model_dir=bundle,
+            output=output,
+            replace_trust_manifest=False,
+            model_version=model_bundle.SENTIMENT_MODEL_V2_VERSION,
+        )
+    )
+
+    assert manifest["model_version"] == model_bundle.SENTIMENT_MODEL_V2_VERSION
+    assert manifest["release"]["tag"] == exporter.MODEL_V2_RELEASE_TAG
+    assert manifest["release"]["url"] == exporter.MODEL_V2_RELEASE_URL
+    assert manifest["release"]["asset"] == exporter.MODEL_V2_RELEASE_ASSET
+
+
+def test_validate_model_bundle_rejects_malformed_manifest_version(tmp_path):
+    bundle = _write_fake_bundle(tmp_path)
+    exporter = _load_exporter()
+    manifest = exporter.build_export_manifest(
+        bundle,
+        root=tmp_path,
+        model_version=model_bundle.SENTIMENT_MODEL_V2_VERSION,
+    )
+    manifest_path = tmp_path / "malformed-manifest.json"
+
+    for malformed_version in ([], {}):
+        manifest["model_version"] = malformed_version
+        manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+        with pytest.raises(ModelBundleError, match="model_version.*string"):
+            validate_model_bundle(bundle, manifest_path=manifest_path)
+
+
+def test_default_trust_anchor_does_not_opt_into_v2(tmp_path, monkeypatch):
+    bundle = _write_fake_bundle(tmp_path)
+    exporter = _load_exporter()
+    manifest_path = tmp_path / "manifest-v2.json"
+    manifest_path.write_text(
+        json.dumps(
+            exporter.build_export_manifest(
+                bundle,
+                root=tmp_path,
+                model_version=model_bundle.SENTIMENT_MODEL_V2_VERSION,
+            )
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(model_bundle, "DEFAULT_EXPORT_MANIFEST", manifest_path)
+
+    with pytest.raises(ModelBundleError, match="unsupported"):
+        validate_model_bundle(bundle)
+
+
+def test_validate_model_bundle_rejects_unsupported_explicit_version(tmp_path):
+    bundle = _write_fake_bundle(tmp_path)
+    exporter = _load_exporter()
+    manifest = exporter.build_export_manifest(bundle, root=tmp_path)
+    manifest["model_version"] = "sentiment-model-v3"
+    manifest_path = tmp_path / "manifest-v3.json"
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+    with pytest.raises(ModelBundleError, match="unsupported"):
+        validate_model_bundle(bundle, manifest_path=manifest_path)
+
+
+def test_validate_model_bundle_rejects_tampered_explicit_v2_manifest(tmp_path):
+    bundle = _write_fake_bundle(tmp_path)
+    exporter = _load_exporter()
+    manifest_path = tmp_path / "manifest-v2.json"
+    manifest_path.write_text(
+        json.dumps(
+            exporter.build_export_manifest(
+                bundle,
+                root=tmp_path,
+                model_version=model_bundle.SENTIMENT_MODEL_V2_VERSION,
+            )
+        ),
+        encoding="utf-8",
+    )
+    (bundle / "tokenizer.json").write_bytes(b"tampered!!!")
 
     with pytest.raises(ModelBundleError, match="checksum mismatch"):
         validate_model_bundle(bundle, manifest_path=manifest_path)

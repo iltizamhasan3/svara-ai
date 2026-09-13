@@ -1,0 +1,91 @@
+{
+  "manifest_version": 1,
+  "model_version": "sentiment-model-v2",
+  "model": "indobenchmark/indobert-base-p1",
+  "revision": "c2cd0b51ddce6580eb35263b39b0a1e5fb0a39e2",
+  "preprocessing_version": "preprocessing-v1",
+  "label_mapping": {
+    "positive": 0,
+    "neutral": 1,
+    "negative": 2
+  },
+  "inference": {
+    "device": "cpu",
+    "local_files_only": true,
+    "required_files": [
+      "config.json",
+      "model.safetensors",
+      "tokenizer.json",
+      "tokenizer_config.json",
+      "special_tokens_map.json",
+      "vocab.txt"
+    ]
+  },
+  "bundle": {
+    "path": "model-v2",
+    "files": {
+      "config.json": {
+        "size_bytes": 1038,
+        "sha256": "d12c694e9280e80711e0d8e587b3d8005a50b27a9f8fc530848e51fd1141f182"
+      },
+      "model.safetensors": {
+        "size_bytes": 497798148,
+        "sha256": "3e44378c196bc70fd6ed082556dad7110205fc9323d9f33d46739bd42be88db1"
+      },
+      "tokenizer.json": {
+        "size_bytes": 709125,
+        "sha256": "f11fab6108ebecf8d5fdb511f0c736ed110495c26a3ebf0badccbdb32460e0e3"
+      },
+      "tokenizer_config.json": {
+        "size_bytes": 1400,
+        "sha256": "319b37692e60fa98c073a132e47f00f27ceeaf12ca5de9f99a0b8d75aed46df3"
+      },
+      "special_tokens_map.json": {
+        "size_bytes": 695,
+        "sha256": "5d5b662e421ea9fac075174bb0688ee0d9431699900b90662acd44b2a350503a"
+      },
+      "vocab.txt": {
+        "size_bytes": 229167,
+        "sha256": "35cfc7be6dc3ec71102248722f352830a8fd89b5a5dadb83d70c2f7794ddbc11"
+      }
+    }
+  },
+  "release": {
+    "tag": "ai-model-v2.0.0",
+    "url": "https://github.com/iltizamhasan3/svara-ai/releases/tag/ai-model-v2.0.0",
+    "asset": "svara-ai-sentiment-model-v2.tar.gz"
+  },
+  "external_evaluation": {
+    "igar_only": true,
+    "training_or_tuning": false
+  },
+  "training": {
+    "base_model_release": "ai-model-v1.0.0",
+    "mode": "additional_only_head_adaptation",
+    "source_dataset": "Indonesian Google Play Review",
+    "source_license": "CC BY 4.0",
+    "source_rows": 4208,
+    "epochs": 1.0,
+    "learning_rate": 0.0001,
+    "train_batch_size": 64,
+    "max_length": 128,
+    "seed": 42,
+    "device": "cpu",
+    "torch_threads": 4,
+    "encoder_frozen": true,
+    "igar_forbidden": true,
+    "igar_labels_used": false,
+    "igar_metrics_used": false
+  },
+  "validation": {
+    "non_igar_only": true,
+    "smsa_validation": {
+      "accuracy": 0.9380952380952381,
+      "macro_f1": 0.9112702791377729
+    },
+    "google_play_confirmation": {
+      "accuracy": 0.8262411347517731,
+      "macro_f1": 0.593703928141447
+    }
+  }
+}
